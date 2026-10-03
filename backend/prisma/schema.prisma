@@ -1,0 +1,125 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum MetricType {
+  BOOLEAN
+  NUMBER
+  RATING
+  SINGLE_SELECT
+  MULTIPLE_SELECT
+  TEXT
+}
+
+enum GoalOperator {
+  GTE @map(">=")
+  LTE @map("<=")
+  EQ  @map("=")
+}
+
+enum GoalPeriod {
+  DAILY  @map("daily")
+  WEEKLY @map("weekly")
+}
+
+model Account {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  groups  Group[]
+  metrics Metric[]
+  goals   Goal[]
+
+  @@map("accounts")
+}
+
+model Group {
+  id        String   @id @default(uuid()) @db.Uuid
+  accountId String   @db.Uuid
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  account Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  metrics Metric[]
+
+  @@unique([accountId, name])
+  @@map("groups")
+}
+
+model Metric {
+  id          String     @id @default(uuid()) @db.Uuid
+  accountId   String     @db.Uuid
+  groupId     String?    @db.Uuid
+  name        String
+  description String?
+  type        MetricType
+  unit        String?
+  ratingMin   Float?
+  ratingMax   Float?
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  account Account        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  group   Group?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  options MetricOption[]
+  records MetricRecord[]
+  goals   Goal[]
+
+  @@unique([accountId, name])
+  @@map("metrics")
+}
+
+model MetricOption {
+  id        String   @id @default(uuid()) @db.Uuid
+  metricId  String   @db.Uuid
+  label     String
+  sortOrder Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  metric Metric @relation(fields: [metricId], references: [id], onDelete: Cascade)
+
+  @@unique([metricId, label])
+  @@map("metric_options")
+}
+
+model MetricRecord {
+  id         String   @id @default(uuid()) @db.Uuid
+  metricId   String   @db.Uuid
+  value      Json     @db.JsonB
+  note       String?
+  recordedAt DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  metric Metric @relation(fields: [metricId], references: [id], onDelete: Cascade)
+
+  @@map("metric_records")
+}
+
+model Goal {
+  id          String       @id @default(uuid()) @db.Uuid
+  accountId   String       @db.Uuid
+  metricId    String       @db.Uuid
+  name        String
+  targetValue Json         @db.JsonB
+  operator    GoalOperator
+  period      GoalPeriod
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  metric  Metric  @relation(fields: [metricId], references: [id], onDelete: Cascade)
+
+  @@map("goals")
+}
