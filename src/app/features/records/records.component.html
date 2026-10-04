@@ -1,0 +1,118 @@
+<div class="records-page">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">บันทึกข้อมูล</h1>
+      <p class="page-description">ประวัติการบันทึกข้อมูลตัวชี้วัดสุขภาวะประจำวันของคุณ</p>
+    </div>
+    <div class="header-actions">
+      @if (!isLoading() && !errorMessage() && records().length > 0) {
+        <span class="header-badge">
+          ทั้งหมด {{ records().length }} รายการ
+        </span>
+      }
+      <a routerLink="/records/new" class="btn-primary-action">
+        + บันทึกข้อมูล
+      </a>
+    </div>
+  </div>
+
+  @if (successMessage(); as success) {
+    <div class="alert alert-success" role="alert">
+      {{ success }}
+    </div>
+  }
+
+  @if (errorMessage(); as error) {
+    @if (records().length > 0) {
+      <div class="alert alert-error" role="alert">
+        {{ error }}
+      </div>
+    }
+  }
+
+  @if (isLoading()) {
+    <div class="state-container">
+      <div class="loading-spinner"></div>
+      <p class="state-text">กำลังโหลดข้อมูล...</p>
+    </div>
+  } @else if (errorMessage() && records().length === 0) {
+    <div class="state-container state-error">
+      <div class="state-icon">⚠️</div>
+      <p class="state-text">{{ errorMessage() }}</p>
+      <button type="button" class="btn-retry" (click)="loadRecords()">
+        ลองใหม่
+      </button>
+    </div>
+  } @else if (records().length === 0) {
+    <div class="state-container state-empty">
+      <div class="state-icon">📝</div>
+      <h2 class="empty-title">ยังไม่มีข้อมูลที่บันทึก</h2>
+      <p class="empty-description">
+        คุณยังไม่ได้บันทึกข้อมูลตัวชี้วัดใด ๆ เริ่มต้นบันทึกสุขภาวะของคุณเพื่อติดตามแนวโน้มและพฤติกรรมในแต่ละวัน
+      </p>
+      <a routerLink="/records/new" class="btn-primary-action btn-empty-action">
+        + เริ่มบันทึกข้อมูลแรก
+      </a>
+    </div>
+  } @else {
+    <div class="records-grid">
+      @for (record of records(); track record.id) {
+        <div class="record-card">
+          <div class="card-header">
+            <h2 class="metric-name">{{ record.metric.name }}</h2>
+            <span class="type-badge" [ngClass]="getTypeBadgeClass(record.metric.type)">
+              {{ getMetricTypeLabel(record.metric.type) }}
+            </span>
+          </div>
+
+          <div class="value-section">
+            @if (record.metric.type === 'MULTIPLE_SELECT') {
+              <div class="options-pills">
+                @for (label of getMultipleSelectLabels(record); track $index) {
+                  <span class="option-pill">{{ label }}</span>
+                }
+                @if (getMultipleSelectLabels(record).length === 0) {
+                  <span class="value-empty">-</span>
+                }
+              </div>
+            } @else {
+              <div class="value-display" [class.value-boolean]="record.metric.type === 'BOOLEAN'" [class.value-text]="record.metric.type === 'TEXT'">
+                {{ formatValue(record) }}
+              </div>
+            }
+          </div>
+
+          @if (record.note) {
+            <div class="note-section">
+              <span class="note-label">โน้ต:</span>
+              <p class="note-text">{{ record.note }}</p>
+            </div>
+          }
+
+          <div class="card-footer">
+            <span class="recorded-time">
+              {{ formatThaiDateTime(record.recordedAt) }}
+            </span>
+            <div class="card-actions">
+              <a [routerLink]="['/records', record.id, 'edit']" class="btn-action-edit">
+                แก้ไข
+              </a>
+              <button
+                type="button"
+                class="btn-action-delete"
+                [disabled]="deletingRecordId() === record.id"
+                (click)="onDelete(record)"
+              >
+                @if (deletingRecordId() === record.id) {
+                  กำลังลบ...
+                } @else {
+                  ลบ
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

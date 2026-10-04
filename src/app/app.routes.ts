@@ -71,6 +71,20 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'records/new',
+        loadComponent: () =>
+          import(
+            './features/records/create-record/create-record.component'
+          ).then((m) => m.CreateRecordComponent),
+      },
+      {
+        path: 'records/:id/edit',
+        loadComponent: () =>
+          import(
+            './features/records/edit-record/edit-record.component'
+          ).then((m) => m.EditRecordComponent),
+      },
+      {
         path: 'insights',
         loadComponent: () =>
           import('./features/insights/insights.component').then(

@@ -1,0 +1,271 @@
+<div class="edit-record-container">
+  <div class="page-nav">
+    <a routerLink="/records" class="nav-back">
+      ← กลับไปหน้ารายการบันทึก
+    </a>
+  </div>
+
+  @if (isLoading()) {
+    <div class="state-container">
+      <div class="loading-spinner"></div>
+      <p class="state-text">กำลังโหลดข้อมูลการบันทึก...</p>
+    </div>
+  } @else if (isNotFound()) {
+    <div class="state-container state-empty">
+      <div class="state-icon">🔍</div>
+      <h2 class="empty-title">ไม่พบข้อมูลที่ต้องการแก้ไข</h2>
+      <p class="empty-description">
+        ไม่พบข้อมูลการบันทึกนี้ในระบบ หรือข้อมูลอาจถูกลบไปแล้ว
+      </p>
+      <a routerLink="/records" class="btn-empty-action">
+        กลับไปข้อมูลที่บันทึก
+      </a>
+    </div>
+  } @else if (loadError(); as error) {
+    <div class="state-container state-error">
+      <div class="state-icon">⚠️</div>
+      <p class="state-text">{{ error }}</p>
+      <div class="error-actions">
+        <button type="button" class="btn-retry" (click)="ngOnInit()">
+          ลองใหม่
+        </button>
+        <a routerLink="/records" class="btn-back">
+          กลับหน้ารายการ
+        </a>
+      </div>
+    </div>
+  } @else if (record(); as rec) {
+    @if (metric(); as met) {
+      <div class="form-card">
+        <div class="card-header">
+          <h1 class="card-title">แก้ไขการบันทึกข้อมูล</h1>
+          <p class="card-subtitle">แก้ไขข้อมูลตัวชี้วัด "{{ met.name }}"</p>
+        </div>
+
+        @if (errorMessage(); as error) {
+          <div class="alert alert-error" role="alert">
+            {{ error }}
+          </div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="record-form">
+          <!-- Metric Information Banner -->
+          <div class="metric-meta-banner">
+            <span class="metric-name-title">{{ met.name }}</span>
+            <span class="type-badge" [ngClass]="getTypeBadgeClass(met.type)">
+              {{ getMetricTypeLabel(met.type) }}
+            </span>
+            @if (met.description) {
+              <span class="metric-desc-text">{{ met.description }}</span>
+            }
+          </div>
+
+          <!-- Dynamic Input Section Based on Metric Type -->
+          <div class="dynamic-input-card">
+            <!-- BOOLEAN TYPE -->
+            @if (met.type === 'BOOLEAN') {
+              <div class="form-group">
+                <label class="form-label">
+                  สถานะการทำกิจกรรม <span class="required">*</span>
+                </label>
+                <div class="boolean-toggle-group">
+                  <button
+                    type="button"
+                    class="btn-bool-toggle"
+                    [class.btn-bool-active]="form.value.booleanValue === true"
+                    (click)="form.patchValue({ booleanValue: true })"
+                  >
+                    ✓ ทำแล้ว / ใช่
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-bool-toggle"
+                    [class.btn-bool-active]="form.value.booleanValue === false"
+                    (click)="form.patchValue({ booleanValue: false })"
+                  >
+                    ✗ ไม่ได้ทำ / ไม่ใช่
+                  </button>
+                </div>
+              </div>
+            }
+
+            <!-- NUMBER TYPE -->
+            @if (met.type === 'NUMBER') {
+              <div class="form-group">
+                <label for="numberValue" class="form-label">
+                  ค่าที่บันทึก (ตัวเลข) <span class="required">*</span>
+                </label>
+                <div class="input-with-unit">
+                  <input
+                    id="numberValue"
+                    type="number"
+                    step="any"
+                    formControlName="numberValue"
+                    placeholder="เช่น 70.5 หรือ 30"
+                    class="form-input"
+                  />
+                  @if (met.unit) {
+                    <span class="unit-badge">{{ met.unit }}</span>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- RATING TYPE -->
+            @if (met.type === 'RATING') {
+              <div class="form-group">
+                <label for="ratingValue" class="form-label">
+                  คะแนนประเมิน (ช่วง {{ met.ratingMin ?? 1 }} ถึง {{ met.ratingMax ?? 5 }}) <span class="required">*</span>
+                </label>
+
+                @if (getRatingOptions(met); as ratingOpts) {
+                  @if (ratingOpts.length > 0) {
+                    <div class="rating-pills">
+                      @for (score of ratingOpts; track score) {
+                        <button
+                          type="button"
+                          class="btn-rating-pill"
+                          [class.btn-rating-active]="form.value.ratingValue === score"
+                          (click)="form.patchValue({ ratingValue: score })"
+                        >
+                          {{ score }}
+                        </button>
+                      }
+                    </div>
+                  }
+                }
+
+                <div class="rating-input-fallback">
+                  <span class="sub-label">หรือพิมพ์คะแนนโดยตรง:</span>
+                  <input
+                    id="ratingValue"
+                    type="number"
+                    [min]="met.ratingMin ?? 1"
+                    [max]="met.ratingMax ?? 5"
+                    formControlName="ratingValue"
+                    class="form-input rating-number-input"
+                  />
+                </div>
+              </div>
+            }
+
+            <!-- SINGLE_SELECT TYPE -->
+            @if (met.type === 'SINGLE_SELECT') {
+              <div class="form-group">
+                <label for="singleSelectValue" class="form-label">
+                  เลือกตัวเลือก <span class="required">*</span>
+                </label>
+                @if (met.options && met.options.length > 0) {
+                  <select
+                    id="singleSelectValue"
+                    formControlName="singleSelectValue"
+                    class="form-select"
+                  >
+                    @for (opt of met.options; track opt.id) {
+                      <option [value]="opt.id">
+                        {{ opt.label }}
+                      </option>
+                    }
+                  </select>
+                } @else {
+                  <p class="field-hint">ตัวชี้วัดนี้ยังไม่มีรายการตัวเลือก</p>
+                }
+              </div>
+            }
+
+            <!-- MULTIPLE_SELECT TYPE -->
+            @if (met.type === 'MULTIPLE_SELECT') {
+              <div class="form-group">
+                <label class="form-label">
+                  เลือกรายการ (เลือกได้มากกว่า 1 ข้อ) <span class="required">*</span>
+                </label>
+                @if (met.options && met.options.length > 0) {
+                  <div class="multi-options-grid">
+                    @for (opt of met.options; track opt.id) {
+                      <button
+                        type="button"
+                        class="btn-multi-option"
+                        [class.btn-multi-active]="isOptionSelected(opt.id)"
+                        (click)="toggleOptionId(opt.id)"
+                      >
+                        <span class="check-box-icon">{{ isOptionSelected(opt.id) ? '☑' : '☐' }}</span>
+                        <span>{{ opt.label }}</span>
+                      </button>
+                    }
+                  </div>
+                  @if (selectedOptionIds().length > 0) {
+                    <span class="field-hint">เลือกแล้ว {{ selectedOptionIds().length }} รายการ</span>
+                  }
+                } @else {
+                  <p class="field-hint">ตัวชี้วัดนี้ยังไม่มีรายการตัวเลือก</p>
+                }
+              </div>
+            }
+
+            <!-- TEXT TYPE -->
+            @if (met.type === 'TEXT') {
+              <div class="form-group">
+                <label for="textValue" class="form-label">
+                  ข้อความบันทึก <span class="required">*</span>
+                </label>
+                <textarea
+                  id="textValue"
+                  formControlName="textValue"
+                  rows="3"
+                  placeholder="พิมพ์ข้อความที่คุณต้องการบันทึก..."
+                  class="form-textarea"
+                ></textarea>
+              </div>
+            }
+          </div>
+
+          <!-- Recorded At (Date & Time) -->
+          <div class="form-group">
+            <label for="recordedAt" class="form-label">
+              วันที่และเวลาที่บันทึก <span class="required">*</span>
+            </label>
+            <input
+              id="recordedAt"
+              type="datetime-local"
+              formControlName="recordedAt"
+              class="form-input datetime-input"
+            />
+            <span class="field-hint">สามารถปรับเปลี่ยนเวลาที่บันทึกย้อนหลังได้</span>
+          </div>
+
+          <!-- Optional Note -->
+          <div class="form-group">
+            <label for="note" class="form-label">
+              หมายเหตุ <span class="optional">(ไม่บังคับ)</span>
+            </label>
+            <textarea
+              id="note"
+              formControlName="note"
+              rows="2"
+              placeholder="ระบุบริบทเพิ่มเติม เช่น หลังอาหาร, ก่อนนอน, หลังออกกำลังกาย..."
+              class="form-textarea"
+            ></textarea>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <a routerLink="/records" class="btn-cancel">
+              ยกเลิก
+            </a>
+            <button
+              type="submit"
+              class="btn-submit"
+              [disabled]="isSubmitting()"
+            >
+              @if (isSubmitting()) {
+                <span>กำลังบันทึก...</span>
+              } @else {
+                <span>บันทึกการแก้ไข</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+  }
+</div>
