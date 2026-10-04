@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import prisma from './lib/prisma';
 import authRoutes from './routes/auth.routes';
+import metricRoutes from './routes/metric.routes';
 import { errorHandler } from './middleware/error.middleware';
 
 dotenv.config();
@@ -17,6 +18,10 @@ app.use(express.json());
 // Authentication routes
 app.use('/auth', authRoutes);
 app.use('/api/auth', authRoutes);
+
+// Metric routes
+app.use('/metrics', metricRoutes);
+app.use('/api/metrics', metricRoutes);
 
 app.get('/api/health', async (_req: Request, res: Response) => {
   try {
