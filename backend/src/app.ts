@@ -1,7 +1,10 @@
+import 'reflect-metadata';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import prisma from './lib/prisma';
+import authRoutes from './routes/auth.routes';
+import { errorHandler } from './middleware/error.middleware';
 
 dotenv.config();
 
@@ -10,6 +13,10 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// Authentication routes
+app.use('/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 
 app.get('/api/health', async (_req: Request, res: Response) => {
   try {
@@ -36,6 +43,9 @@ app.get('/', (_req: Request, res: Response) => {
     status: 'running',
   });
 });
+
+// Centralized error handling
+app.use(errorHandler);
 
 const server = app.listen(port, () => {
   console.log(`[server]: Glance backend running at http://localhost:${port}`);
