@@ -6,6 +6,7 @@ import prisma from './lib/prisma';
 import authRoutes from './routes/auth.routes';
 import metricRoutes from './routes/metric.routes';
 import recordRoutes from './routes/record.routes';
+import dashboardRoutes from './routes/dashboard.routes';
 import { errorHandler } from './middleware/error.middleware';
 
 dotenv.config();
@@ -27,6 +28,10 @@ app.use('/api/metrics', metricRoutes);
 // Record routes
 app.use('/records', recordRoutes);
 app.use('/api/records', recordRoutes);
+
+// Dashboard routes
+app.use('/dashboard', dashboardRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 app.get('/api/health', async (_req: Request, res: Response) => {
   try {
