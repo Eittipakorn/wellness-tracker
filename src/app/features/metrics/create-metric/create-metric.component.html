@@ -1,0 +1,197 @@
+<div class="create-metric-container">
+  <div class="page-nav">
+    <a routerLink="/metrics" class="nav-back">
+      ← กลับไปหน้ารายการตัวชี้วัด
+    </a>
+  </div>
+
+  <div class="form-card">
+    <div class="card-header">
+      <h1 class="card-title">เพิ่มตัวชี้วัดใหม่</h1>
+      <p class="card-subtitle">กำหนดรูปแบบข้อมูลที่คุณต้องการติดตามและสังเกตรูปแบบชีวิต</p>
+    </div>
+
+    @if (errorMessage(); as error) {
+      <div class="alert alert-error" role="alert">
+        {{ error }}
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="metric-form">
+      <!-- 1. Metric Name -->
+      <div class="form-group">
+        <label for="name" class="form-label">
+          ชื่อตัวชี้วัด <span class="required">*</span>
+        </label>
+        <input
+          id="name"
+          type="text"
+          formControlName="name"
+          placeholder="เช่น น้ำหนัก, ดื่มน้ำ, นั่งสมาธิ, ระดับความเครียด"
+          class="form-input"
+          [class.input-error]="isFieldInvalid('name')"
+          autocomplete="off"
+        />
+        @if (isFieldInvalid('name')) {
+          <span class="field-error">{{ getNameError() }}</span>
+        }
+      </div>
+
+      <!-- 2. Metric Type Selector -->
+      <div class="form-group">
+        <label class="form-label">
+          ประเภทตัวชี้วัด <span class="required">*</span>
+        </label>
+        <div class="type-selector-grid">
+          @for (option of typeOptions; track option.value) {
+            <div
+              class="type-card"
+              [class.type-card-active]="selectedType === option.value"
+              (click)="onTypeChange(option.value)"
+            >
+              <div class="type-card-header">
+                <input
+                  type="radio"
+                  [id]="'type-' + option.value"
+                  name="type"
+                  [value]="option.value"
+                  formControlName="type"
+                  class="type-radio"
+                />
+                <label [for]="'type-' + option.value" class="type-name">
+                  {{ option.label }}
+                </label>
+              </div>
+              <p class="type-desc">{{ option.description }}</p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- 3. Dynamic Configuration Section -->
+      @if (selectedType === 'NUMBER') {
+        <div class="dynamic-config-card">
+          <div class="form-group">
+            <label for="unit" class="form-label">
+              หน่วยของตัวเลข <span class="optional">(ถ้ามี)</span>
+            </label>
+            <input
+              id="unit"
+              type="text"
+              formControlName="unit"
+              placeholder="เช่น kg, นาที, แก้ว, กิโลเมตร, ครั้ง"
+              class="form-input"
+            />
+            <span class="field-hint">หน่วยจะถูกแสดงคู่กับตัวเลขในหน้าบันทึกและกราฟสรุป</span>
+          </div>
+        </div>
+      }
+
+      @if (selectedType === 'RATING') {
+        <div class="dynamic-config-card">
+          <label class="form-label">
+            ช่วงคะแนนประเมิน <span class="required">*</span>
+          </label>
+          <div class="rating-range-inputs">
+            <div class="form-group-inline">
+              <label for="ratingMin" class="sub-label">คะแนนต่ำสุด</label>
+              <input
+                id="ratingMin"
+                type="number"
+                formControlName="ratingMin"
+                class="form-input number-input"
+              />
+            </div>
+            <span class="range-divider">ถึง</span>
+            <div class="form-group-inline">
+              <label for="ratingMax" class="sub-label">คะแนนสูงสุด</label>
+              <input
+                id="ratingMax"
+                type="number"
+                formControlName="ratingMax"
+                class="form-input number-input"
+              />
+            </div>
+          </div>
+          <span class="field-hint">คะแนนต่ำสุดต้องน้อยกว่าคะแนนสูงสุด เช่น 1 ถึง 5 หรือ 1 ถึง 10</span>
+        </div>
+      }
+
+      @if (selectedType === 'SINGLE_SELECT' || selectedType === 'MULTIPLE_SELECT') {
+        <div class="dynamic-config-card">
+          <div class="options-header">
+            <div>
+              <label class="form-label">
+                รายการตัวเลือก <span class="required">*</span>
+              </label>
+              <span class="field-hint">กำหนดตัวเลือกให้เลือกตอนบันทึกข้อมูล (อย่างน้อย 2 รายการ)</span>
+            </div>
+            <button
+              type="button"
+              class="btn-add-option"
+              (click)="addOption()"
+            >
+              + เพิ่มตัวเลือก
+            </button>
+          </div>
+
+          <div formArrayName="options" class="options-list">
+            @for (optionCtrl of optionsArray.controls; track $index) {
+              <div class="option-row">
+                <span class="option-index">{{ $index + 1 }}.</span>
+                <input
+                  type="text"
+                  [formControlName]="$index"
+                  placeholder="เช่น ดีมาก, ปานกลาง, หรือชื่ออาการ"
+                  class="form-input"
+                />
+                @if (optionsArray.length > 2) {
+                  <button
+                    type="button"
+                    (click)="removeOption($index)"
+                    class="btn-remove-option"
+                    title="ลบตัวเลือกนี้"
+                  >
+                    ✕
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- 4. Description -->
+      <div class="form-group">
+        <label for="description" class="form-label">
+          คำอธิบายเพิ่มเติม <span class="optional">(ไม่บังคับ)</span>
+        </label>
+        <textarea
+          id="description"
+          formControlName="description"
+          rows="3"
+          placeholder="ระบุจุดประสงค์หรือวิธีสังเกตสำหรับตัวชี้วัดนี้..."
+          class="form-textarea"
+        ></textarea>
+      </div>
+
+      <!-- 5. Form Actions -->
+      <div class="form-actions">
+        <a routerLink="/metrics" class="btn-cancel">
+          ยกเลิก
+        </a>
+        <button
+          type="submit"
+          class="btn-submit"
+          [disabled]="isLoading()"
+        >
+          @if (isLoading()) {
+            <span>กำลังบันทึก...</span>
+          } @else {
+            <span>สร้างตัวชี้วัด</span>
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

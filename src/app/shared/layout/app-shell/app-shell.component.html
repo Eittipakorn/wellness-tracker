@@ -1,0 +1,63 @@
+<div class="shell-layout">
+  <header class="shell-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <a routerLink="/dashboard" class="brand-link">
+          <span class="brand-badge">Glance</span>
+          <span class="brand-text">ระบบติดตามสุขภาวะ</span>
+        </a>
+      </div>
+
+      <nav class="header-nav">
+        <a
+          routerLink="/dashboard"
+          routerLinkActive="active"
+          class="nav-link"
+        >
+          ภาพรวม
+        </a>
+        <a
+          routerLink="/metrics"
+          routerLinkActive="active"
+          class="nav-link"
+        >
+          ตัวชี้วัด
+        </a>
+        <a
+          routerLink="/records"
+          routerLinkActive="active"
+          class="nav-link"
+        >
+          บันทึกข้อมูล
+        </a>
+        <a
+          routerLink="/insights"
+          routerLinkActive="active"
+          class="nav-link"
+        >
+          ข้อมูลเชิงลึก
+        </a>
+      </nav>
+
+      <div class="header-user">
+        @if (authService.currentUser()?.email; as email) {
+          <span class="user-email" [title]="email">{{ email }}</span>
+        }
+        <button
+          type="button"
+          (click)="onLogout()"
+          class="btn-logout"
+          title="ออกจากระบบ"
+        >
+          ออกจากระบบ
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell-main">
+    <div class="main-container">
+      <router-outlet />
+    </div>
+  </main>
+</div>

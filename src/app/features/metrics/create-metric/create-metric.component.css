@@ -1,0 +1,61 @@
+.create-metric-container { max-width: 780px; margin: 0 auto; padding-bottom: 2rem; }
+.page-nav { margin-bottom: 1.25rem; }
+.nav-back { display: inline-flex; align-items: center; gap: .375rem; font-size: .875rem; font-weight: 500; color: #2563eb; text-decoration: none; }
+.nav-back:hover { text-decoration: underline; }
+
+.form-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.75rem; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+.card-header { margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; }
+.card-title { font-size: 1.5rem; font-weight: 700; color: #0f172a; margin: 0 0 .375rem; }
+.card-subtitle { font-size: .9375rem; color: #64748b; margin: 0; }
+
+.alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: .75rem 1rem; border-radius: .5rem; font-size: .875rem; margin-bottom: 1.25rem; }
+
+.metric-form { display: flex; flex-direction: column; gap: 1.25rem; }
+.form-group { display: flex; flex-direction: column; }
+.form-label { font-size: .9375rem; font-weight: 600; color: #334155; margin-bottom: .375rem; }
+.required { color: #ef4444; }
+.optional { font-size: .8125rem; color: #94a3b8; }
+
+.form-input, .form-textarea { width: 100%; padding: .625rem .875rem; font-size: .9375rem; color: #0f172a; background: #fff; border: 1.5px solid #cbd5e1; border-radius: .5rem; font-family: inherit; }
+.form-input:focus, .form-textarea:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
+.form-input.input-error { border-color: #ef4444; }
+.field-error { font-size: .8125rem; color: #dc2626; margin-top: .25rem; }
+.field-hint { font-size: .8125rem; color: #64748b; margin-top: .25rem; }
+
+.type-selector-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: .625rem; }
+.type-card { border: 1.5px solid #e2e8f0; border-radius: .5rem; padding: .75rem; cursor: pointer; background: #fff; }
+.type-card:hover { border-color: #cbd5e1; background: #f8fafc; }
+.type-card.type-card-active { border-color: #2563eb; background: #eff6ff; }
+.type-card-header { display: flex; align-items: center; gap: .5rem; margin-bottom: .25rem; }
+.type-radio { cursor: pointer; accent-color: #2563eb; }
+.type-name { font-size: .875rem; font-weight: 600; color: #0f172a; cursor: pointer; }
+.type-desc { font-size: .75rem; color: #64748b; margin: 0; line-height: 1.35; }
+
+.dynamic-config-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: .5rem; padding: 1rem 1.25rem; }
+.rating-range-inputs { display: flex; align-items: center; gap: 1rem; }
+.form-group-inline { display: flex; flex-direction: column; gap: .25rem; }
+.sub-label { font-size: .8125rem; font-weight: 500; color: #475569; }
+.number-input { width: 90px; }
+.range-divider { font-size: .875rem; color: #64748b; margin-top: 1.25rem; }
+
+.options-header { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: .75rem; }
+.btn-add-option { padding: .375rem .75rem; font-size: .8125rem; font-weight: 600; color: #2563eb; background: #eff6ff; border: 1px solid #dbeafe; border-radius: .375rem; cursor: pointer; }
+.options-list { display: flex; flex-direction: column; gap: .5rem; }
+.option-row { display: flex; align-items: center; gap: .5rem; }
+.option-index { font-size: .875rem; font-weight: 600; color: #64748b; width: 1.25rem; text-align: right; }
+.btn-remove-option { display: flex; align-items: center; justify-content: center; width: 1.875rem; height: 1.875rem; color: #94a3b8; background: transparent; border: none; border-radius: .375rem; cursor: pointer; }
+.btn-remove-option:hover { color: #ef4444; background: #fee2e2; }
+
+.form-actions { display: flex; justify-content: flex-end; gap: .75rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; }
+.btn-cancel { padding: .625rem 1.25rem; font-size: .9375rem; font-weight: 600; color: #475569; background: #fff; border: 1px solid #cbd5e1; border-radius: .5rem; text-decoration: none; cursor: pointer; }
+.btn-cancel:hover { background: #f1f5f9; }
+.btn-submit { padding: .625rem 1.5rem; font-size: .9375rem; font-weight: 600; color: #fff; background: #2563eb; border: none; border-radius: .5rem; cursor: pointer; }
+.btn-submit:hover:not(:disabled) { background: #1d4ed8; }
+.btn-submit:disabled { opacity: .65; cursor: not-allowed; }
+
+@media (max-width: 640px) {
+  .form-card { padding: 1.25rem 1rem; }
+  .type-selector-grid { grid-template-columns: 1fr; }
+  .form-actions { flex-direction: column-reverse; }
+  .btn-cancel, .btn-submit { width: 100%; text-align: center; }
+}

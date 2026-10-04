@@ -1,0 +1,145 @@
+<div class="metrics-page">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">ตัวชี้วัด</h1>
+      <p class="page-description">กำหนดข้อมูลที่ต้องการติดตามและบันทึกเป็นประจำ</p>
+    </div>
+    <div class="header-actions">
+      @if (!isLoading() && !errorMessage() && metrics().length > 0) {
+        <span class="header-badge">
+          ทั้งหมด {{ metrics().length }} รายการ
+        </span>
+      }
+      <a routerLink="/metrics/new" class="btn-primary-action">
+        + เพิ่มตัวชี้วัด
+      </a>
+    </div>
+  </div>
+
+  @if (successMessage(); as success) {
+    <div class="alert alert-success" role="alert">
+      {{ success }}
+    </div>
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="alert alert-error" role="alert">
+      {{ error }}
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="state-container">
+      <div class="loading-spinner"></div>
+      <p class="state-text">กำลังโหลดตัวชี้วัด...</p>
+    </div>
+  } @else if (errorMessage() && metrics().length === 0) {
+    <div class="state-container state-error">
+      <div class="state-icon">⚠️</div>
+      <p class="state-text">{{ errorMessage() }}</p>
+      <button type="button" class="btn-retry" (click)="loadMetrics()">
+        ลองใหม่
+      </button>
+    </div>
+  } @else if (metrics().length === 0) {
+    <div class="state-container state-empty">
+      <div class="state-icon">📋</div>
+      <h2 class="empty-title">ยังไม่มีตัวชี้วัด</h2>
+      <p class="empty-description">
+        เริ่มต้นบันทึกสุขภาวะของคุณด้วยการสร้างตัวชี้วัดรายการแรก
+      </p>
+      <a routerLink="/metrics/new" class="btn-primary-action btn-empty-action">
+        + เพิ่มตัวชี้วัด
+      </a>
+    </div>
+  } @else {
+    <div class="metrics-grid">
+      @for (metric of metrics(); track metric.id) {
+        <div class="metric-card" [class.metric-inactive]="!metric.isActive">
+          <div class="card-header">
+            <h2 class="metric-name">{{ metric.name }}</h2>
+            <button
+              type="button"
+              class="status-toggle-btn"
+              [class.status-active]="metric.isActive"
+              [class.status-inactive]="!metric.isActive"
+              [disabled]="togglingMetricId() === metric.id || deletingMetricId() === metric.id"
+              (click)="onToggleActive(metric)"
+              title="คลิกเพื่อเปลี่ยนสถานะเปิด/ปิดการใช้งาน"
+            >
+              @if (togglingMetricId() === metric.id) {
+                <span>กำลังบันทึก...</span>
+              } @else {
+                <span class="status-dot">{{ metric.isActive ? '●' : '○' }}</span>
+                <span>{{ metric.isActive ? 'ใช้งานอยู่' : 'ปิดใช้งาน' }}</span>
+              }
+            </button>
+          </div>
+
+          <div class="card-badges">
+            <span class="type-badge" [ngClass]="getTypeBadgeClass(metric.type)">
+              {{ getMetricTypeLabel(metric.type) }}
+            </span>
+            @if (metric.group) {
+              <span class="group-badge">
+                กลุ่ม: {{ metric.group.name }}
+              </span>
+            }
+          </div>
+
+          @if (metric.description) {
+            <p class="metric-desc">{{ metric.description }}</p>
+          }
+
+          <div class="metric-attributes">
+            @if (metric.type === 'NUMBER' && metric.unit) {
+              <div class="attr-item">
+                <span class="attr-label">หน่วย:</span>
+                <span class="attr-value">{{ metric.unit }}</span>
+              </div>
+            }
+
+            @if (metric.type === 'RATING' && metric.ratingMin !== null && metric.ratingMax !== null) {
+              <div class="attr-item">
+                <span class="attr-label">ช่วงคะแนน:</span>
+                <span class="attr-value">{{ metric.ratingMin }} – {{ metric.ratingMax }}</span>
+              </div>
+            }
+
+            @if ((metric.type === 'SINGLE_SELECT' || metric.type === 'MULTIPLE_SELECT') && metric.options.length > 0) {
+              <div class="attr-item options-block">
+                <span class="attr-label">ตัวเลือก ({{ metric.options.length }}):</span>
+                <div class="options-tags">
+                  @for (opt of metric.options; track opt.id) {
+                    <span class="option-tag">{{ opt.label }}</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="card-actions">
+            <a
+              [routerLink]="['/metrics', metric.id, 'edit']"
+              class="btn-card-action btn-edit"
+            >
+              แก้ไข
+            </a>
+            <button
+              type="button"
+              class="btn-card-action btn-delete"
+              [disabled]="deletingMetricId() === metric.id || togglingMetricId() === metric.id"
+              (click)="onDelete(metric)"
+            >
+              @if (deletingMetricId() === metric.id) {
+                <span>กำลังลบ...</span>
+              } @else {
+                <span>ลบ</span>
+              }
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -1,0 +1,82 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="brand-badge">Glance</div>
+      <h1 class="auth-title">สมัครสมาชิก</h1>
+      <p class="auth-subtitle">เริ่มต้นบันทึกและเข้าใจสุขภาวะของคุณ</p>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="alert alert-error" role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate class="auth-form">
+      <div class="form-group">
+        <label for="email" class="form-label">อีเมล</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="name@example.com"
+          class="form-input"
+          [class.input-error]="isFieldInvalid('email')"
+          autocomplete="email"
+        />
+        @if (isFieldInvalid('email')) {
+          <span class="field-error">{{ getEmailError() }}</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="••••••••"
+          class="form-input"
+          [class.input-error]="isFieldInvalid('password')"
+          autocomplete="new-password"
+        />
+        @if (isFieldInvalid('password')) {
+          <span class="field-error">{{ getPasswordError() }}</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword" class="form-label">ยืนยันรหัสผ่าน</label>
+        <input
+          id="confirmPassword"
+          type="password"
+          formControlName="confirmPassword"
+          placeholder="••••••••"
+          class="form-input"
+          [class.input-error]="isConfirmPasswordInvalid()"
+          autocomplete="new-password"
+        />
+        @if (isConfirmPasswordInvalid()) {
+          <span class="field-error">{{ getConfirmPasswordError() }}</span>
+        }
+      </div>
+
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="isLoading()"
+      >
+        @if (isLoading()) {
+          <span>กำลังสมัครสมาชิก...</span>
+        } @else {
+          <span>สมัครสมาชิก</span>
+        }
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <span>มีบัญชีอยู่แล้ว?</span>
+      <a routerLink="/login" class="auth-link">เข้าสู่ระบบ</a>
+    </div>
+  </div>
+</div>

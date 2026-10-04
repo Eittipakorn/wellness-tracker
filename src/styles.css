@@ -1,1 +1,44 @@
-/* You can add global styles to this file, and also import other style files */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans Thai', 'Helvetica Neue', Arial, sans-serif;
+  color: #1e293b;
+  background-color: #f8fafc;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Global alerts */
+.alert-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: .75rem 1rem; border-radius: .5rem; font-size: .875rem; margin-bottom: 1.5rem; }
+.alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: .75rem 1rem; border-radius: .5rem; font-size: .875rem; margin-bottom: 1.5rem; }
+
+/* Global loading & states */
+.loading-spinner { width: 2.25rem; height: 2.25rem; border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 1rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.state-container { display: flex; flex-direction: column; align-items: center; padding: 3.5rem 1.5rem; background: #fff; border: 1px dashed #cbd5e1; border-radius: .75rem; text-align: center; max-width: 560px; margin: 1rem auto; width: 100%; }
+.state-icon { font-size: 2.5rem; margin-bottom: .75rem; }
+.state-text { font-size: .9375rem; color: #64748b; margin: 0; }
+.empty-title { font-size: 1.25rem; font-weight: 600; color: #1e293b; margin: 0 0 .5rem; }
+.empty-description { font-size: .875rem; color: #64748b; line-height: 1.5; margin: 0; }
+.state-error { border-color: #fca5a5; background: #fffafb; }
+.state-error .state-text { color: #b91c1c; margin-bottom: 1rem; }
+.btn-retry { padding: .5rem 1.25rem; font-size: .875rem; font-weight: 600; color: #fff; background: #2563eb; border: none; border-radius: .375rem; cursor: pointer; }
+
+/* Global Metric Type Badges */
+.type-badge { font-size: .75rem; font-weight: 600; padding: .25rem .5rem; border-radius: .375rem; }
+.badge-boolean { background: #e0f2fe; color: #0369a1; }
+.badge-number { background: #e0e7ff; color: #4338ca; }
+.badge-rating { background: #fef3c7; color: #b45309; }
+.badge-single-select { background: #ede9fe; color: #6d28d9; }
+.badge-multi-select { background: #fae8ff; color: #86198f; }
+.badge-text { background: #dcfce7; color: #15803d; }
+.badge-default { background: #f1f5f9; color: #475569; }
+

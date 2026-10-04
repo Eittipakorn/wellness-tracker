@@ -1,0 +1,72 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="brand-badge">Glance</div>
+      <h1 class="auth-title">เข้าสู่ระบบ</h1>
+      <p class="auth-subtitle">ระบบติดตามสุขภาวะและข้อมูลส่วนบุคคล</p>
+    </div>
+
+    @if (successMessage()) {
+      <div class="alert alert-success" role="alert">
+        {{ successMessage() }}
+      </div>
+    }
+
+    @if (errorMessage()) {
+      <div class="alert alert-error" role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate class="auth-form">
+      <div class="form-group">
+        <label for="email" class="form-label">อีเมล</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="name@example.com"
+          class="form-input"
+          [class.input-error]="isFieldInvalid('email')"
+          autocomplete="email"
+        />
+        @if (isFieldInvalid('email')) {
+          <span class="field-error">{{ getEmailError() }}</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">รหัสผ่าน</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="••••••••"
+          class="form-input"
+          [class.input-error]="isFieldInvalid('password')"
+          autocomplete="current-password"
+        />
+        @if (isFieldInvalid('password')) {
+          <span class="field-error">{{ getPasswordError() }}</span>
+        }
+      </div>
+
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="isLoading()"
+      >
+        @if (isLoading()) {
+          <span>กำลังเข้าสู่ระบบ...</span>
+        } @else {
+          <span>เข้าสู่ระบบ</span>
+        }
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <span>ยังไม่มีบัญชี?</span>
+      <a routerLink="/register" class="auth-link">สมัครสมาชิก</a>
+    </div>
+  </div>
+</div>
