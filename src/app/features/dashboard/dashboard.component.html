@@ -403,23 +403,34 @@
           <div class="card-stack">
             @for (rec of data.recentRecords; track rec.id) {
               <div class="recent-record-row">
-                <div class="rec-info-col">
-                  <span class="rec-title">{{ rec.metricName }}</span>
-                  <span class="type-badge" [ngClass]="getTypeBadgeClass(rec.metricType)">
-                    {{ getMetricTypeLabel(rec.metricType) }}
-                  </span>
-                </div>
+                <div class="rec-main-col">
+                  <div class="rec-info-col">
+                    <span class="rec-title">{{ rec.metricName }}</span>
+                    <span class="type-badge" [ngClass]="getTypeBadgeClass(rec.metricType)">
+                      {{ getMetricTypeLabel(rec.metricType) }}
+                    </span>
+                  </div>
 
-                <div class="rec-value-col">
-                  <span class="rec-val-text">{{ formatRecentRecordValue(rec) }}</span>
+                  <div class="rec-value-col">
+                    <span class="rec-val-text">{{ formatRecentRecordValue(rec) }}</span>
+                  </div>
+
                   @if (rec.note) {
-                    <span class="rec-note-text">{{ rec.note }}</span>
+                    <div class="rec-note-col desktop-note">
+                      <span class="rec-note-text">{{ rec.note }}</span>
+                    </div>
                   }
                 </div>
 
                 <div class="rec-time-col">
                   <span class="text-sub">{{ formatThaiDateTime(rec.recordedAt) }}</span>
                 </div>
+
+                @if (rec.note) {
+                  <div class="rec-note-col mobile-note">
+                    <span class="rec-note-text">{{ rec.note }}</span>
+                  </div>
+                }
               </div>
             }
           </div>
