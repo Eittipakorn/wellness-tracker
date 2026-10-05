@@ -1,12 +1,354 @@
-<div class="page-header">
-  <h1 class="page-title">ภาพรวม</h1>
-  <p class="page-description">หน้านี้จะแสดงภาพรวมข้อมูลสุขภาวะของคุณ</p>
-</div>
+<div class="dashboard-page">
+  <!-- 1. Page Header & Date Range Control -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">ภาพรวม</h1>
+      <p class="text-sub" style="margin: 0;">
+        สรุปภาพรวมสุขภาพ รายการติดตาม และแนวโน้มพฤติกรรมของคุณ
+      </p>
+    </div>
 
-<div class="placeholder-card">
-  <div class="placeholder-icon">📊</div>
-  <h2 class="placeholder-title">ยินดีต้อนรับสู่ Glance</h2>
-  <p class="placeholder-text">
-    ระบบจะรวบรวมสรุปข้อมูลรายการติดตาม กราฟแนวโน้ม และความคืบหน้าของเป้าหมายในหน้านี้
-  </p>
+    <!-- Date Range Toggle -->
+    <div class="date-range-control">
+      <span class="range-label">ช่วงเวลา:</span>
+      <div class="range-btn-group">
+        <button
+          type="button"
+          class="btn-range"
+          [class.btn-range-active]="selectedDays() === 7"
+          [disabled]="isLoading()"
+          (click)="loadDashboard(7)"
+        >
+          7 วัน
+        </button>
+        <button
+          type="button"
+          class="btn-range"
+          [class.btn-range-active]="selectedDays() === 30"
+          [disabled]="isLoading()"
+          (click)="loadDashboard(30)"
+        >
+          30 วัน
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="state-container">
+      <div class="loading-spinner"></div>
+      <p class="state-text">กำลังโหลดข้อมูล...</p>
+    </div>
+  } @else if (errorMessage()) {
+    <!-- Error State -->
+    <div class="state-container state-error">
+      <div class="state-icon">⚠️</div>
+      <p class="state-text">{{ errorMessage() }}</p>
+      <button type="button" class="btn-retry" (click)="loadDashboard(selectedDays())">
+        ลองอีกครั้ง
+      </button>
+    </div>
+  } @else if (dashboardData(); as data) {
+    <!-- Empty State (No Metrics Created Yet) -->
+    @if (data.overview.totalMetrics === 0) {
+      <div class="state-container state-empty">
+        <div class="state-icon">📊</div>
+        <h2 class="empty-title">ยังไม่มีรายการติดตาม</h2>
+        <p class="empty-description">
+          สร้างรายการติดตามแรกของคุณเพื่อเริ่มเก็บข้อมูลสุขภาพและดูสรุปภาพรวมในหน้านี้
+        </p>
+        <a routerLink="/metrics/new" class="btn-primary-action btn-empty-action">
+          + เพิ่มตัวชี้วัดแรก
+        </a>
+      </div>
+    } @else {
+      <!-- 2. Overview Summary Cards -->
+      <section class="overview-section">
+        <div class="overview-grid">
+          <div class="overview-card">
+            <span class="overview-label">ตัวชี้วัดทั้งหมด</span>
+            <div class="overview-value-row">
+              <span class="overview-value">{{ data.overview.totalMetrics }}</span>
+              <span class="text-sub">รายการ</span>
+            </div>
+            <span class="text-meta">เปิดใช้งาน {{ data.overview.activeMetrics }} รายการ</span>
+          </div>
+
+          <div class="overview-card">
+            <span class="overview-label">เปิดใช้งาน</span>
+            <div class="overview-value-row">
+              <span class="overview-value text-success">{{ data.overview.activeMetrics }}</span>
+              <span class="text-sub">รายการ</span>
+            </div>
+            <span class="text-meta">
+              {{ data.overview.totalMetrics - data.overview.activeMetrics }} ปิดใช้งาน
+            </span>
+          </div>
+
+          <div class="overview-card">
+            <span class="overview-label">บันทึกทั้งหมด</span>
+            <div class="overview-value-row">
+              <span class="overview-value text-primary">{{ data.overview.totalRecordsInRange }}</span>
+              <span class="text-sub">ครั้ง</span>
+            </div>
+            <span class="text-meta">ในช่วงเวลาที่เลือก</span>
+          </div>
+
+          <div class="overview-card">
+            <span class="overview-label">ช่วงเวลาข้อมูล</span>
+            <div class="overview-value-row">
+              <span class="overview-date-text">{{ formatDateRange(data.overview.dateRange) }}</span>
+            </div>
+            <span class="text-meta">ย้อนหลัง {{ data.overview.dateRange.days }} วัน</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Metric Summaries Section -->
+      <section class="metrics-summary-section">
+        <div class="section-header">
+          <h2 class="section-title">สรุปรายตัวชี้วัด</h2>
+          <span class="section-badge">ทั้งหมด {{ data.metrics.length }} ตัวชี้วัด</span>
+        </div>
+
+        <div class="metrics-grid">
+          @for (metric of data.metrics; track metric.id) {
+            <div class="metric-card" [class.metric-card-inactive]="!metric.isActive">
+              <!-- Card Header -->
+              <div class="metric-card-header">
+                <div class="metric-title-group">
+                  <h3 class="metric-name">{{ metric.name }}</h3>
+                  @if (metric.group) {
+                    <span class="group-tag">{{ metric.group.name }}</span>
+                  }
+                </div>
+                <div class="badge-group">
+                  <span class="type-badge" [ngClass]="getTypeBadgeClass(metric.type)">
+                    {{ getMetricTypeLabel(metric.type) }}
+                  </span>
+                  @if (!metric.isActive) {
+                    <span class="inactive-badge">ปิดใช้งาน</span>
+                  }
+                </div>
+              </div>
+
+              <!-- Metric Content -->
+              @if (metric.summary.totalRecords === 0) {
+                <div class="metric-empty-box">
+                  <p class="text-sub">ไม่มีการบันทึกข้อมูลในช่วงเวลานี้</p>
+                  <a [routerLink]="['/records/new']" [queryParams]="{ metricId: metric.id }" class="btn-quick-record">
+                    + บันทึกข้อมูล
+                  </a>
+                </div>
+              } @else {
+                <!-- NUMBER / RATING Summary & Trend -->
+                @if (metric.type === 'NUMBER' || metric.type === 'RATING') {
+                  <div class="metric-stats-grid">
+                    <div class="stat-item">
+                      <span class="stat-label">ล่าสุด</span>
+                      <span class="stat-val text-primary">
+                        {{ formatLatestValue(metric) }}
+                      </span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">ค่าเฉลี่ย</span>
+                      <span class="stat-val">
+                        {{ metric.summary.average !== null && metric.summary.average !== undefined ? metric.summary.average : '-' }}
+                        @if (metric.unit && metric.summary.average !== null) {
+                          <span class="text-sub">{{ metric.unit }}</span>
+                        }
+                      </span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">ต่ำสุด</span>
+                      <span class="stat-val">
+                        {{ metric.summary.min !== null && metric.summary.min !== undefined ? metric.summary.min : '-' }}
+                        @if (metric.unit && metric.summary.min !== null) {
+                          <span class="text-sub">{{ metric.unit }}</span>
+                        }
+                      </span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">สูงสุด</span>
+                      <span class="stat-val">
+                        {{ metric.summary.max !== null && metric.summary.max !== undefined ? metric.summary.max : '-' }}
+                        @if (metric.unit && metric.summary.max !== null) {
+                          <span class="text-sub">{{ metric.unit }}</span>
+                        }
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Trend Line Chart -->
+                  @if (metric.trend && metric.trend.length > 0) {
+                    <div class="trend-box">
+                      <div class="trend-header">
+                        <span class="trend-title">แนวโน้ม</span>
+                        <span class="text-meta">{{ metric.trend.length }} วันที่มีข้อมูล</span>
+                      </div>
+                      <div class="svg-sparkline-wrap">
+                        <svg viewBox="0 0 240 50" class="sparkline-svg">
+                          @if (getPolylinePoints(metric.trend)) {
+                            <polyline
+                              fill="none"
+                              stroke="#2563eb"
+                              stroke-width="2.5"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              [attr.points]="getPolylinePoints(metric.trend)"
+                            />
+                          }
+                          @for (pt of getTrendPoints(metric.trend); track pt.date) {
+                            <circle
+                              [attr.cx]="pt.x"
+                              [attr.cy]="pt.y"
+                              r="3.5"
+                              fill="#fff"
+                              stroke="#2563eb"
+                              stroke-width="2"
+                            />
+                          }
+                        </svg>
+                      </div>
+                      <div class="trend-date-axis">
+                        <span>{{ getTrendStartDate(metric.trend) }}</span>
+                        <span>{{ getTrendEndDate(metric.trend) }}</span>
+                      </div>
+                    </div>
+                  }
+                }
+
+                <!-- BOOLEAN Summary & Breakdown -->
+                @if (metric.type === 'BOOLEAN') {
+                  <div class="card-stack">
+                    <div class="stat-item stat-item-full">
+                      <span class="stat-label">ล่าสุด</span>
+                      <span class="stat-val text-primary">
+                        {{ formatLatestValue(metric) }}
+                      </span>
+                    </div>
+                    <div class="bool-counts-row">
+                      <div class="bool-count-pill pill-true">
+                        <span class="status-dot dot-true"></span>
+                        <span>ทำแล้ว: <strong>{{ metric.summary.trueCount ?? 0 }}</strong> ครั้ง</span>
+                      </div>
+                      <div class="bool-count-pill pill-false">
+                        <span class="status-dot dot-false"></span>
+                        <span>ไม่ได้ทำ: <strong>{{ metric.summary.falseCount ?? 0 }}</strong> ครั้ง</span>
+                      </div>
+                    </div>
+
+                    <!-- Visual Ratio Bar -->
+                    @if (metric.summary.totalRecords > 0) {
+                      <div class="ratio-bar-wrap">
+                        <div
+                          class="ratio-bar-fill"
+                          [style.width.%]="((metric.summary.trueCount ?? 0) / metric.summary.totalRecords) * 100"
+                        ></div>
+                      </div>
+                    }
+
+                    <!-- Daily Trend Dots -->
+                    @if (getBooleanTrend(metric).length > 0) {
+                      <div class="trend-dots-row">
+                        @for (day of getBooleanTrend(metric); track day.date) {
+                          <div class="trend-day-dot" [title]="day.date">
+                            <span
+                              class="status-dot"
+                              [class.dot-true]="isBooleanPointTrue(day)"
+                              [class.dot-false]="isBooleanPointFalse(day)"
+                            ></span>
+                            <span class="dot-day-label">{{ formatDateShort(day.date) }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- SINGLE_SELECT & MULTIPLE_SELECT Summary -->
+                @if (metric.type === 'SINGLE_SELECT' || metric.type === 'MULTIPLE_SELECT') {
+                  <div class="card-stack">
+                    <div class="stat-item stat-item-full">
+                      <span class="stat-label">ล่าสุด</span>
+                      <span class="stat-val text-primary">
+                        {{ formatLatestValue(metric) }}
+                      </span>
+                    </div>
+
+                    <div class="breakdown-wrap">
+                      <span class="stat-label">สัดส่วนตัวเลือก</span>
+                      <div class="option-breakdown-list">
+                        @for (item of getOptionBreakdownEntries(metric.summary.optionBreakdown); track item.label) {
+                          <div class="breakdown-item">
+                            <span class="breakdown-label">{{ item.label }}</span>
+                            <span class="breakdown-count">{{ item.count }} ครั้ง</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+
+                <!-- TEXT Summary -->
+                @if (metric.type === 'TEXT') {
+                  <div class="card-stack">
+                    <div class="stat-item stat-item-full">
+                      <span class="stat-label">บันทึกล่าสุด</span>
+                      <p class="text-latest-val">{{ formatLatestValue(metric) }}</p>
+                    </div>
+                    <div class="text-meta-row">
+                      <span class="stat-label">บันทึกทั้งหมด {{ metric.summary.totalRecords }} ครั้ง</span>
+                      <span class="stat-label">{{ formatThaiDateTime(metric.summary.latestRecordedAt) }}</span>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- 4. Recent Records Section -->
+      <section class="recent-records-section">
+        <div class="section-header">
+          <h2 class="section-title">บันทึกล่าสุด</h2>
+          <a routerLink="/records" class="link-view-all">
+            ดูทั้งหมด →
+          </a>
+        </div>
+
+        @if (data.recentRecords.length === 0) {
+          <div class="state-container" style="padding: 2rem; margin: 0; max-width: none;">
+            <p class="state-text">ไม่มีบันทึกข้อมูลล่าสุด</p>
+          </div>
+        } @else {
+          <div class="card-stack">
+            @for (rec of data.recentRecords; track rec.id) {
+              <div class="recent-record-row">
+                <div class="rec-info-col">
+                  <span class="rec-title">{{ rec.metricName }}</span>
+                  <span class="type-badge" [ngClass]="getTypeBadgeClass(rec.metricType)">
+                    {{ getMetricTypeLabel(rec.metricType) }}
+                  </span>
+                </div>
+
+                <div class="rec-value-col">
+                  <span class="rec-title">{{ formatRecentRecordValue(rec) }}</span>
+                  @if (rec.note) {
+                    <span class="text-meta">{{ rec.note }}</span>
+                  }
+                </div>
+
+                <div class="rec-time-col">
+                  <span class="text-sub">{{ formatThaiDateTime(rec.recordedAt) }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+  }
 </div>
