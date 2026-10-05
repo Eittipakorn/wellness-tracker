@@ -1,0 +1,167 @@
+<div class="insights-page">
+  <!-- 1. Page Header & Date Range Control -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">AI Insight</h1>
+      <p class="text-sub" style="margin: 0;">
+        สรุปแนวโน้มและรูปแบบจากข้อมูลที่คุณบันทึกไว้
+      </p>
+    </div>
+
+    <!-- Date Range Toggle -->
+    <div class="date-range-control">
+      <span class="range-label">ช่วงเวลา:</span>
+      <div class="range-btn-group">
+        <button
+          type="button"
+          class="btn-range"
+          [class.btn-range-active]="selectedDays() === 7"
+          [disabled]="isLoading()"
+          (click)="loadInsights(7)"
+        >
+          7 วัน
+        </button>
+        <button
+          type="button"
+          class="btn-range"
+          [class.btn-range-active]="selectedDays() === 30"
+          [disabled]="isLoading()"
+          (click)="loadInsights(30)"
+        >
+          30 วัน
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="state-container">
+      <div class="loading-spinner"></div>
+      <p class="state-text">กำลังโหลดข้อมูล...</p>
+    </div>
+  } @else if (errorMessage()) {
+    <!-- Error State -->
+    <div class="state-container state-error">
+      <div class="state-icon">⚠️</div>
+      <p class="state-text">{{ errorMessage() }}</p>
+      <button type="button" class="btn-retry" (click)="loadInsights(selectedDays())">
+        ลองอีกครั้ง
+      </button>
+    </div>
+  } @else if (insightData(); as data) {
+    <!-- 2. Summary Section -->
+    <section class="summary-section">
+      <div class="overview-grid">
+        <div class="overview-card">
+          <span class="overview-label">Insights</span>
+          <div class="overview-value-row">
+            <span class="overview-value text-primary">{{ data.summary.totalInsights }}</span>
+            <span class="text-sub">รายการ</span>
+          </div>
+          <span class="text-meta">ที่ตรวจพบในระบบ</span>
+        </div>
+
+        <div class="overview-card">
+          <span class="overview-label">Metrics ที่วิเคราะห์</span>
+          <div class="overview-value-row">
+            <span class="overview-value">{{ data.summary.analyzedMetrics }}</span>
+            <span class="text-sub">รายการ</span>
+          </div>
+          <span class="text-meta">รายการติดตามที่มีข้อมูล</span>
+        </div>
+
+        <div class="overview-card">
+          <span class="overview-label">Records ที่วิเคราะห์</span>
+          <div class="overview-value-row">
+            <span class="overview-value">{{ data.summary.analyzedRecords }}</span>
+            <span class="text-sub">ครั้ง</span>
+          </div>
+          <span class="text-meta">ในช่วงเวลาที่เลือก</span>
+        </div>
+
+        <div class="overview-card">
+          <span class="overview-label">ช่วงเวลา</span>
+          <div class="overview-value-row">
+            <span class="overview-date-text">{{ formatDateRange(data.summary.dateRange) }}</span>
+          </div>
+          <span class="text-meta">ย้อนหลัง {{ data.summary.dateRange.days }} วัน</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Insights Content Section -->
+    <section class="insights-list-section">
+      @if (data.insights.length === 0) {
+        <!-- Empty State -->
+        <div class="state-container state-empty">
+          <div class="state-icon">💡</div>
+          <h2 class="empty-title">ยังไม่มี Insight สำหรับช่วงเวลานี้</h2>
+          <p class="empty-description">
+            ระบบยังไม่พบแนวโน้มหรือรูปแบบที่เด่นชัดในช่วงเวลา {{ selectedDays() }} วันที่ผ่านมา ลองบันทึกข้อมูลเพิ่มเติมหรือขยายช่วงเวลา
+          </p>
+          @if (selectedDays() === 7) {
+            <button type="button" class="btn-retry" style="margin-top: 1rem;" (click)="loadInsights(30)">
+              ดูช่วงเวลา 30 วัน
+            </button>
+          }
+        </div>
+      } @else {
+        <div class="insights-grid">
+          @for (insight of data.insights; track insight.id) {
+            <article class="insight-card" [class]="'card-' + insight.category">
+              <!-- Card Header -->
+              <div class="insight-card-header">
+                <div class="insight-title-group">
+                  <span class="insight-type-icon">{{ getTypeIcon(insight.type) }}</span>
+                  <h3 class="insight-title">{{ insight.title }}</h3>
+                </div>
+
+                <div class="badge-group">
+                  <span class="type-badge" [class]="getCategoryBadgeClass(insight.category)">
+                    {{ getCategoryLabel(insight.category) }}
+                  </span>
+                  <span class="badge-type">
+                    {{ getTypeLabel(insight.type) }}
+                  </span>
+                  @if (insight.metricName) {
+                    <span class="metric-tag">{{ insight.metricName }}</span>
+                  }
+                </div>
+              </div>
+
+              <!-- Card Message -->
+              <p class="insight-message">{{ insight.message }}</p>
+
+              <!-- Evidence Section (ข้อมูลประกอบ) -->
+              @if (formatEvidence(insight.evidence); as evidenceList) {
+                @if (evidenceList.length > 0) {
+                  <div class="evidence-box">
+                    <span class="evidence-title">ข้อมูลประกอบ</span>
+                    <div class="evidence-chips">
+                      @for (item of evidenceList; track item.label) {
+                        <span class="evidence-chip">
+                          <span class="chip-label">{{ item.label }}:</span>
+                          <span class="chip-val">{{ item.value }}</span>
+                        </span>
+                      }
+                    </div>
+                  </div>
+                }
+              }
+
+              <!-- Cold-start Call-to-action -->
+              @if (isColdStart(insight)) {
+                <div class="cold-start-action">
+                  <a routerLink="/records/new" class="btn-quick-record">
+                    + เริ่มบันทึกข้อมูลแรก
+                  </a>
+                </div>
+              }
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+</div>
