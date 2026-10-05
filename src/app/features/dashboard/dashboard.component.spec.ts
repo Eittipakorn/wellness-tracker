@@ -4,17 +4,25 @@ import { of, throwError } from 'rxjs';
 import { Injector } from '@angular/core';
 import { DashboardComponent } from './dashboard.component';
 import { DashboardService } from '../../core/services/dashboard.service';
+import { InsightService } from '../../core/services/insight.service';
 import {
   DashboardData,
   MetricSummaryItem,
   RecentRecordItem,
 } from '../../core/models/dashboard.models';
+import {
+  InsightItem,
+  InsightResponseData,
+} from '../../core/models/insight.models';
 
 describe('DashboardComponent', () => {
   let injector: Injector;
   let component: DashboardComponent;
   let mockDashboardService: {
     getDashboard: ReturnType<typeof vi.fn>;
+  };
+  let mockInsightService: {
+    getInsights: ReturnType<typeof vi.fn>;
   };
 
   const sampleNumberMetric: MetricSummaryItem = {
@@ -237,6 +245,61 @@ describe('DashboardComponent', () => {
     recentRecords: sampleRecentRecords,
   };
 
+  const sampleInsights: InsightItem[] = [
+    {
+      id: 'ins-1',
+      type: 'trend',
+      category: 'positive',
+      title: 'ดื่มน้ำสม่ำเสมอ',
+      message: 'คุณดื่มน้ำถึงเป้าหมาย 6 วันในรอบสัปดาห์',
+      metricId: 'm-num',
+      metricName: 'ดื่มน้ำ',
+      evidence: { achievementRate: 85 },
+    },
+    {
+      id: 'ins-2',
+      type: 'pattern',
+      category: 'warning',
+      title: 'ระดับความเครียดเพิ่มสูงขึ้น',
+      message: 'ความเครียดมีแนวโน้มเพิ่มขึ้นในช่วงบ่าย',
+      metricId: 'm-rating',
+      metricName: 'ระดับความเครียด',
+      evidence: { direction: 'increasing' },
+    },
+    {
+      id: 'ins-3',
+      type: 'suggestion',
+      category: 'info',
+      title: 'ลองออกกำลังกายตอนเช้า',
+      message: 'การออกกำลังกายช่วยปรับสมดุลสุขภาพจิตใจ',
+      metricId: 'm-bool',
+      metricName: 'ออกกำลังกาย',
+      evidence: { recordCount: 5 },
+    },
+    {
+      id: 'ins-4',
+      type: 'info',
+      category: 'info',
+      title: 'บันทึกข้อมูลครบถ้วน',
+      message: 'คุณบันทึกข้อมูลต่อเนื่อง',
+      evidence: {},
+    },
+  ];
+
+  const sampleInsightResponseData: InsightResponseData = {
+    summary: {
+      totalInsights: 4,
+      analyzedMetrics: 3,
+      analyzedRecords: 22,
+      dateRange: {
+        startDate: '2026-09-28T00:00:00.000Z',
+        endDate: '2026-10-05T00:00:00.000Z',
+        days: 7,
+      },
+    },
+    insights: sampleInsights,
+  };
+
   beforeEach(() => {
     mockDashboardService = {
       getDashboard: vi.fn().mockReturnValue(
@@ -247,10 +310,20 @@ describe('DashboardComponent', () => {
       ),
     };
 
+    mockInsightService = {
+      getInsights: vi.fn().mockReturnValue(
+        of({
+          statusCode: 200,
+          data: sampleInsightResponseData,
+        })
+      ),
+    };
+
     injector = Injector.create({
       providers: [
         { provide: DashboardComponent },
         { provide: DashboardService, useValue: mockDashboardService },
+        { provide: InsightService, useValue: mockInsightService },
       ],
     });
 
@@ -477,5 +550,242 @@ describe('DashboardComponent', () => {
     expect(component.formatDateRange({} as any)).toBe('-');
     expect(component.formatThaiDateTime(null)).toBe('-');
     expect(component.formatDateShort('')).toBe('');
+  });
+
+  // --- Step 6E Integration Tests ---
+
+  // 13. InsightService is called with default days = 7
+  it('should call InsightService with default days = 7 on init', () => {
+    component.ngOnInit();
+    expect(mockInsightService.getInsights).toHaveBeenCalledWith({ days: 7 });
+    expect(component.isInsightLoading()).toBe(false);
+    expect(component.insightData()).toEqual(sampleInsightResponseData);
+    expect(component.insightErrorMessage()).toBeNull();
+  });
+
+  // 14. Insight preview renders returned insights
+  it('should format insight preview items correctly with icons, labels, and classes', () => {
+    component.ngOnInit();
+    const preview = component.previewInsights();
+    expect(preview.length).toBeGreaterThan(0);
+
+    expect(component.getInsightCategoryLabel('positive')).toBe('เชิงบวก');
+    expect(component.getInsightCategoryLabel('warning')).toBe('ข้อควรระวัง');
+    expect(component.getInsightCategoryLabel('info')).toBe('ข้อมูลทั่วไป');
+
+    expect(component.getInsightCategoryBadgeClass('positive')).toBe('badge-positive');
+    expect(component.getInsightCategoryBadgeClass('warning')).toBe('badge-warning');
+    expect(component.getInsightCategoryBadgeClass('info')).toBe('badge-info');
+
+    expect(component.getInsightCategoryCardClass('positive')).toBe('card-positive');
+    expect(component.getInsightCategoryCardClass('warning')).toBe('card-warning');
+    expect(component.getInsightCategoryCardClass('info')).toBe('card-info');
+
+    expect(component.getInsightTypeLabel('trend')).toBe('แนวโน้ม');
+    expect(component.getInsightTypeLabel('pattern')).toBe('รูปแบบ');
+    expect(component.getInsightTypeLabel('relationship')).toBe('ความสัมพันธ์');
+    expect(component.getInsightTypeLabel('goal_progress')).toBe('ความคืบหน้าเป้าหมาย');
+    expect(component.getInsightTypeLabel('suggestion')).toBe('คำแนะนำ');
+    expect(component.getInsightTypeLabel('info')).toBe('ข้อมูล');
+
+    expect(component.getInsightTypeIcon('trend')).toBe('📈');
+    expect(component.getInsightTypeIcon('pattern')).toBe('🔁');
+    expect(component.getInsightTypeIcon('relationship')).toBe('🔗');
+    expect(component.getInsightTypeIcon('goal_progress')).toBe('🎯');
+    expect(component.getInsightTypeIcon('suggestion')).toBe('💡');
+    expect(component.getInsightTypeIcon('info')).toBe('ℹ️');
+  });
+
+  // 15. Maximum 3 insights are displayed
+  it('should display at most 3 insights in previewInsights even when more are returned', () => {
+    component.ngOnInit();
+    expect(sampleInsightResponseData.insights.length).toBe(4);
+    expect(component.previewInsights().length).toBe(3);
+  });
+
+  // 16. Warning insights are prioritized over positive/info
+  it('should prioritize warning insights over positive and info insights', () => {
+    const mixedInsights: InsightItem[] = [
+      { id: '1', type: 'info', category: 'info', title: 'I1', message: 'M', evidence: {} },
+      { id: '2', type: 'trend', category: 'positive', title: 'P1', message: 'M', evidence: {} },
+      { id: '3', type: 'pattern', category: 'warning', title: 'W1', message: 'M', evidence: {} },
+      { id: '4', type: 'suggestion', category: 'info', title: 'I2', message: 'M', evidence: {} },
+      { id: '5', type: 'pattern', category: 'warning', title: 'W2', message: 'M', evidence: {} },
+    ];
+
+    mockInsightService.getInsights.mockReturnValue(
+      of({
+        statusCode: 200,
+        data: {
+          summary: sampleInsightResponseData.summary,
+          insights: mixedInsights,
+        },
+      })
+    );
+
+    component.ngOnInit();
+    const preview = component.previewInsights();
+    expect(preview).toHaveLength(3);
+    expect(preview[0].id).toBe('3'); // W1
+    expect(preview[1].id).toBe('5'); // W2
+    expect(preview[2].id).toBe('2'); // P1
+  });
+
+  // 17. Positive insights are prioritized over info when no warning exists
+  it('should prioritize positive insights over info when no warning exists', () => {
+    const positiveAndInfo: InsightItem[] = [
+      { id: 'i1', type: 'info', category: 'info', title: 'I1', message: 'M', evidence: {} },
+      { id: 'p1', type: 'trend', category: 'positive', title: 'P1', message: 'M', evidence: {} },
+      { id: 'i2', type: 'suggestion', category: 'info', title: 'I2', message: 'M', evidence: {} },
+      { id: 'p2', type: 'trend', category: 'positive', title: 'P2', message: 'M', evidence: {} },
+      { id: 'i3', type: 'info', category: 'info', title: 'I3', message: 'M', evidence: {} },
+    ];
+
+    mockInsightService.getInsights.mockReturnValue(
+      of({
+        statusCode: 200,
+        data: {
+          summary: sampleInsightResponseData.summary,
+          insights: positiveAndInfo,
+        },
+      })
+    );
+
+    component.ngOnInit();
+    const preview = component.previewInsights();
+    expect(preview).toHaveLength(3);
+    expect(preview[0].id).toBe('p1');
+    expect(preview[1].id).toBe('p2');
+    expect(preview[2].id).toBe('i1');
+  });
+
+  // 18. Dashboard period changes from 7 → 30 and InsightService is called with days = 30
+  it('should update InsightService call with days = 30 when dashboard period changes to 30', () => {
+    component.ngOnInit();
+    expect(mockInsightService.getInsights).toHaveBeenCalledWith({ days: 7 });
+
+    component.loadDashboard(30);
+
+    expect(component.selectedDays()).toBe(30);
+    expect(mockDashboardService.getDashboard).toHaveBeenCalledWith({ days: 30 });
+    expect(mockInsightService.getInsights).toHaveBeenCalledWith({ days: 30 });
+  });
+
+  // 19. Insight loading state does not block Dashboard content
+  it('should not block dashboard rendering while insights are still loading', () => {
+    component.loadDashboard(7);
+
+    expect(component.isLoading()).toBe(false);
+    expect(component.dashboardData()).toEqual(sampleDashboardData);
+    expect(component.dashboardData()?.overview.totalMetrics).toBe(6);
+  });
+
+  // 20. Insight API error does not break Dashboard
+  it('should handle Insight API failure gracefully without breaking dashboard content', () => {
+    mockInsightService.getInsights.mockReturnValueOnce(
+      throwError(() => ({ status: 500, message: 'Insight service error' }))
+    );
+
+    component.loadDashboard(7);
+
+    // Dashboard data remains fully intact and available
+    expect(component.isLoading()).toBe(false);
+    expect(component.errorMessage()).toBeNull();
+    expect(component.dashboardData()).toEqual(sampleDashboardData);
+
+    // Insight preview reflects its own inline error
+    expect(component.isInsightLoading()).toBe(false);
+    expect(component.insightErrorMessage()).toBe('ไม่สามารถโหลด Insight ได้');
+  });
+
+  // 21. Insight retry uses the current Dashboard period
+  it('should retry loading insights with the currently selected dashboard period', () => {
+    component.selectedDays.set(30);
+
+    mockInsightService.getInsights.mockReturnValueOnce(
+      throwError(() => ({ status: 500, message: 'Failed' }))
+    );
+    component.loadInsightPreview(30);
+    expect(component.insightErrorMessage()).toBe('ไม่สามารถโหลด Insight ได้');
+
+    mockInsightService.getInsights.mockReturnValueOnce(
+      of({ statusCode: 200, data: sampleInsightResponseData })
+    );
+
+    component.loadInsightPreview(component.selectedDays());
+
+    expect(mockInsightService.getInsights).toHaveBeenLastCalledWith({ days: 30 });
+    expect(component.isInsightLoading()).toBe(false);
+    expect(component.insightErrorMessage()).toBeNull();
+    expect(component.insightData()).toEqual(sampleInsightResponseData);
+  });
+
+  // 22. Cold-start and insufficient-data response renders normally
+  it('should recognize cold-start and insufficient-data insights', () => {
+    const coldStartInsight: InsightItem = {
+      id: 'insight-cold-start',
+      type: 'info',
+      category: 'info',
+      title: 'เริ่มต้นใช้งาน Glance',
+      message: 'คุณยังไม่มีข้อมูลบันทึกในช่วงเวลานี้',
+      evidence: {},
+    };
+
+    const insufficientDataInsight: InsightItem = {
+      id: 'insight-insufficient-data',
+      type: 'info',
+      category: 'info',
+      title: 'ต้องการข้อมูลเพิ่มเติม',
+      message: 'บันทึกข้อมูลเพิ่มอีก 2 ครั้ง เพื่อเริ่มวิเคราะห์',
+      evidence: {},
+    };
+
+    expect(component.isColdStart(coldStartInsight)).toBe(true);
+    expect(component.isColdStart(insufficientDataInsight)).toBe(false);
+
+    expect(component.isInsufficientData(insufficientDataInsight)).toBe(true);
+    expect(component.isInsufficientData(coldStartInsight)).toBe(false);
+
+    mockInsightService.getInsights.mockReturnValue(
+      of({
+        statusCode: 200,
+        data: {
+          summary: sampleInsightResponseData.summary,
+          insights: [coldStartInsight],
+        },
+      })
+    );
+
+    component.ngOnInit();
+    expect(component.previewInsights()).toEqual([coldStartInsight]);
+  });
+
+  // 23. Empty insight array renders empty state
+  it('should return empty preview array when no insights are available', () => {
+    mockInsightService.getInsights.mockReturnValue(
+      of({
+        statusCode: 200,
+        data: {
+          summary: {
+            totalInsights: 0,
+            analyzedMetrics: 0,
+            analyzedRecords: 0,
+            dateRange: { startDate: '2026-09-28', endDate: '2026-10-05', days: 7 },
+          },
+          insights: [],
+        },
+      })
+    );
+
+    component.ngOnInit();
+    expect(component.previewInsights()).toEqual([]);
+    expect(component.isInsightLoading()).toBe(false);
+    expect(component.insightErrorMessage()).toBeNull();
+  });
+
+  // 24. Clean up subscriptions on destroy
+  it('should unsubscribe from subscriptions on ngOnDestroy', () => {
+    component.ngOnInit();
+    expect(() => component.ngOnDestroy()).not.toThrow();
   });
 });

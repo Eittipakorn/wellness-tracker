@@ -1,7 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { DashboardService } from '../../core/services/dashboard.service';
+import { InsightService } from '../../core/services/insight.service';
 import {
   DashboardData,
   DashboardDateRange,
@@ -9,6 +11,12 @@ import {
   RecentRecordItem,
   BooleanTrendPoint,
 } from '../../core/models/dashboard.models';
+import {
+  InsightCategory,
+  InsightItem,
+  InsightResponseData,
+  InsightType,
+} from '../../core/models/insight.models';
 import { MetricType } from '../../core/models/metric.models';
 
 @Component({
@@ -18,16 +26,45 @@ import { MetricType } from '../../core/models/metric.models';
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   private readonly dashboardService = inject(DashboardService);
+  private readonly insightService = inject(InsightService);
+
+  private dashboardSub?: Subscription;
+  private insightSub?: Subscription;
 
   readonly selectedDays = signal<number>(7);
   readonly dashboardData = signal<DashboardData | null>(null);
   readonly isLoading = signal<boolean>(true);
   readonly errorMessage = signal<string | null>(null);
 
+  // Insight Preview State
+  readonly insightData = signal<InsightResponseData | null>(null);
+  readonly isInsightLoading = signal<boolean>(true);
+  readonly insightErrorMessage = signal<string | null>(null);
+
+  // Top 3 prioritized preview insights: warning -> positive -> info
+  readonly previewInsights = computed<InsightItem[]>(() => {
+    const data = this.insightData();
+    if (!data?.insights || data.insights.length === 0) return [];
+
+    const warnings = data.insights.filter((i) => i.category === 'warning');
+    const positives = data.insights.filter((i) => i.category === 'positive');
+    const infos = data.insights.filter((i) => i.category === 'info');
+    const others = data.insights.filter(
+      (i) => i.category !== 'warning' && i.category !== 'positive' && i.category !== 'info'
+    );
+
+    return [...warnings, ...positives, ...infos, ...others].slice(0, 3);
+  });
+
   ngOnInit(): void {
     this.loadDashboard(this.selectedDays());
+  }
+
+  ngOnDestroy(): void {
+    this.dashboardSub?.unsubscribe();
+    this.insightSub?.unsubscribe();
   }
 
   loadDashboard(days: number): void {
@@ -35,18 +72,50 @@ export class DashboardComponent implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    this.dashboardService.getDashboard({ days }).subscribe({
+    this.dashboardSub?.unsubscribe();
+    this.dashboardSub = this.dashboardService.getDashboard({ days }).subscribe({
       next: (res) => {
-        this.dashboardData.set(res.data);
-        this.isLoading.set(false);
+        if (this.selectedDays() === days) {
+          this.dashboardData.set(res.data);
+          this.isLoading.set(false);
+        }
       },
       error: (err) => {
-        this.isLoading.set(false);
-        this.errorMessage.set(
-          err.status === 0
-            ? 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง'
-            : 'ไม่สามารถโหลดข้อมูลภาพรวมได้ กรุณาลองใหม่อีกครั้ง'
-        );
+        if (this.selectedDays() === days) {
+          this.isLoading.set(false);
+          this.errorMessage.set(
+            err.status === 0
+              ? 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง'
+              : 'ไม่สามารถโหลดข้อมูลภาพรวมได้ กรุณาลองใหม่อีกครั้ง'
+          );
+        }
+      },
+    });
+
+    this.loadInsightPreview(days);
+  }
+
+  loadInsightPreview(days: number): void {
+    this.isInsightLoading.set(true);
+    this.insightErrorMessage.set(null);
+
+    this.insightSub?.unsubscribe();
+    this.insightSub = this.insightService.getInsights({ days }).subscribe({
+      next: (res) => {
+        if (this.selectedDays() === days) {
+          this.insightData.set(res.data);
+          this.isInsightLoading.set(false);
+        }
+      },
+      error: (err) => {
+        if (this.selectedDays() === days) {
+          this.isInsightLoading.set(false);
+          this.insightErrorMessage.set(
+            err.status === 0
+              ? 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง'
+              : 'ไม่สามารถโหลด Insight ได้'
+          );
+        }
       },
     });
   }
@@ -284,5 +353,90 @@ export class DashboardComponent implements OnInit {
   ): { label: string; count: number }[] {
     if (!breakdown) return [];
     return Object.entries(breakdown).map(([label, count]) => ({ label, count }));
+  }
+
+  getInsightCategoryLabel(category: InsightCategory): string {
+    switch (category) {
+      case 'positive':
+        return 'เชิงบวก';
+      case 'warning':
+        return 'ข้อควรระวัง';
+      case 'info':
+        return 'ข้อมูลทั่วไป';
+      default:
+        return category;
+    }
+  }
+
+  getInsightCategoryBadgeClass(category: InsightCategory): string {
+    switch (category) {
+      case 'positive':
+        return 'badge-positive';
+      case 'warning':
+        return 'badge-warning';
+      case 'info':
+        return 'badge-info';
+      default:
+        return 'badge-info';
+    }
+  }
+
+  getInsightCategoryCardClass(category: InsightCategory): string {
+    switch (category) {
+      case 'positive':
+        return 'card-positive';
+      case 'warning':
+        return 'card-warning';
+      case 'info':
+        return 'card-info';
+      default:
+        return 'card-info';
+    }
+  }
+
+  getInsightTypeLabel(type: InsightType): string {
+    switch (type) {
+      case 'trend':
+        return 'แนวโน้ม';
+      case 'pattern':
+        return 'รูปแบบ';
+      case 'relationship':
+        return 'ความสัมพันธ์';
+      case 'goal_progress':
+        return 'ความคืบหน้าเป้าหมาย';
+      case 'suggestion':
+        return 'คำแนะนำ';
+      case 'info':
+        return 'ข้อมูล';
+      default:
+        return type;
+    }
+  }
+
+  getInsightTypeIcon(type: InsightType): string {
+    switch (type) {
+      case 'trend':
+        return '📈';
+      case 'pattern':
+        return '🔁';
+      case 'relationship':
+        return '🔗';
+      case 'goal_progress':
+        return '🎯';
+      case 'suggestion':
+        return '💡';
+      case 'info':
+        return 'ℹ️';
+      default:
+        return '✨';
+    }
+  }
+
+  isColdStart(insight: InsightItem): boolean {
+    return insight.id === 'insight-cold-start';
+  }
+
+  isInsufficientData(insight: InsightItem): boolean {
+    return insight.id === 'insight-insufficient-data';
   }
 }

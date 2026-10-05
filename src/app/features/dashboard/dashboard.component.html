@@ -105,7 +105,81 @@
         </div>
       </section>
 
-      <!-- 3. Metric Summaries Section -->
+      <!-- 3. AI Insight Preview Section -->
+      <section class="insight-preview-section">
+        <div class="section-header">
+          <div class="section-title-wrap">
+            <h2 class="section-title">AI Insight</h2>
+            <span class="section-subtitle">สิ่งที่น่าสนใจจากข้อมูลของคุณ</span>
+          </div>
+          <a routerLink="/insights" class="link-view-all">
+            ดู Insight ทั้งหมด →
+          </a>
+        </div>
+
+        @if (isInsightLoading()) {
+          <div class="insight-state-box">
+            <div class="loading-spinner loading-spinner-sm"></div>
+            <span class="text-sub">กำลังโหลดข้อมูลเชิงลึก...</span>
+          </div>
+        } @else if (insightErrorMessage()) {
+          <div class="insight-state-box insight-state-error">
+            <span class="text-error-inline">⚠️ {{ insightErrorMessage() }}</span>
+            <button type="button" class="btn-retry-inline" (click)="loadInsightPreview(selectedDays())">
+              ลองอีกครั้ง
+            </button>
+          </div>
+        } @else if (previewInsights().length === 0) {
+          <div class="insight-state-box insight-state-empty">
+            <p class="text-sub" style="margin: 0 0 0.5rem;">ยังไม่มี Insight สำหรับช่วงเวลานี้</p>
+            <a routerLink="/insights" class="link-view-all">
+              ดู Insight ทั้งหมด →
+            </a>
+          </div>
+        } @else {
+          <div class="insight-preview-grid">
+            @for (insight of previewInsights(); track insight.id) {
+              <div class="insight-preview-card" [ngClass]="getInsightCategoryCardClass(insight.category)">
+                <div class="insight-card-header">
+                  <div class="insight-title-group">
+                    <span class="insight-type-icon">{{ getInsightTypeIcon(insight.type) }}</span>
+                    <h3 class="insight-title">
+                      {{ isColdStart(insight) ? 'เริ่มสร้างข้อมูลของคุณ' : insight.title }}
+                    </h3>
+                  </div>
+                  <div class="badge-group">
+                    <span class="type-badge" [ngClass]="getInsightCategoryBadgeClass(insight.category)">
+                      {{ getInsightCategoryLabel(insight.category) }}
+                    </span>
+                    <span class="badge-type">{{ getInsightTypeLabel(insight.type) }}</span>
+                    @if (insight.metricName) {
+                      <span class="metric-tag">{{ insight.metricName }}</span>
+                    }
+                  </div>
+                </div>
+
+                <p class="insight-message">{{ insight.message }}</p>
+
+                @if (isColdStart(insight)) {
+                  <div class="cold-start-action">
+                    <a routerLink="/records/new" class="btn-quick-record">
+                      + เริ่มบันทึกข้อมูล
+                    </a>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="insight-preview-footer">
+            <a routerLink="/insights" class="link-view-all">
+              ดู Insight ทั้งหมด →
+            </a>
+          </div>
+        }
+      </section>
+
+      <!-- 4. Metric Summaries Section -->
       <section class="metrics-summary-section">
         <div class="section-header">
           <h2 class="section-title">สรุปรายตัวชี้วัด</h2>
