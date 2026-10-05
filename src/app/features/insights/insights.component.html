@@ -2,7 +2,7 @@
   <!-- 1. Page Header & Date Range Control -->
   <div class="page-header">
     <div class="header-content">
-      <h1 class="page-title">AI Insight</h1>
+      <h1 class="page-title">Insight</h1>
       <p class="text-sub" style="margin: 0;">
         สรุปแนวโน้มและรูปแบบจากข้อมูลที่คุณบันทึกไว้
       </p>
@@ -118,12 +118,14 @@
                 </div>
 
                 <div class="badge-group">
-                  <span class="type-badge" [class]="getCategoryBadgeClass(insight.category)">
+                  <span class="type-badge" [ngClass]="getCategoryBadgeClass(insight.category)">
                     {{ getCategoryLabel(insight.category) }}
                   </span>
-                  <span class="badge-type">
-                    {{ getTypeLabel(insight.type) }}
-                  </span>
+                  @if (insight.type !== 'info') {
+                    <span class="badge-type">
+                      {{ getTypeLabel(insight.type) }}
+                    </span>
+                  }
                   @if (insight.metricName) {
                     <span class="metric-tag">{{ insight.metricName }}</span>
                   }

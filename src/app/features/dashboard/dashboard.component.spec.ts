@@ -442,6 +442,24 @@ describe('DashboardComponent', () => {
     expect(component.formatRecentRecordValue(records![5])).toBe('วันนี้รู้สึกแจ่มใส');
   });
 
+  it('should map option UUID to human-readable label when optionsMap is populated', () => {
+    component.optionsMap().set('opt-1', '🟡 ปกติ');
+    component.optionsMap().set('opt-uuid-1', 'ปวดศีรษะ');
+    component.optionsMap().set('opt-uuid-2', 'มีไข้');
+
+    const singleRecord: RecentRecordItem = {
+      ...sampleRecentRecords[3],
+      value: { optionId: 'opt-1' },
+    };
+    expect(component.formatRecentRecordValue(singleRecord)).toBe('🟡 ปกติ');
+
+    const multiRecord: RecentRecordItem = {
+      ...sampleRecentRecords[4],
+      value: { optionIds: ['opt-uuid-1', 'opt-uuid-2'] },
+    };
+    expect(component.formatRecentRecordValue(multiRecord)).toBe('ปวดศีรษะ, มีไข้');
+  });
+
   // 8. loading state
   it('should reflect loading state during fetch', () => {
     mockDashboardService.getDashboard.mockReturnValue(of({ statusCode: 200, data: sampleDashboardData }));

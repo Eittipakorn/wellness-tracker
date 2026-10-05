@@ -118,6 +118,9 @@ export class RecordService {
     if (recordDate > maxFuture) {
       throw new BadRequestError('recordedAt cannot be in the future');
     }
+    if (recordDate.getFullYear() < 1900) {
+      throw new BadRequestError('recordedAt year must be 1900 or later');
+    }
 
     // 4. Save record
     return prisma.metricRecord.create({
@@ -182,6 +185,9 @@ export class RecordService {
       const maxFuture = new Date(Date.now() + 60000);
       if (recordDate > maxFuture) {
         throw new BadRequestError('recordedAt cannot be in the future');
+      }
+      if (recordDate.getFullYear() < 1900) {
+        throw new BadRequestError('recordedAt year must be 1900 or later');
       }
     }
 

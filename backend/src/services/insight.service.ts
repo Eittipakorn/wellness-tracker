@@ -103,9 +103,9 @@ export class InsightService {
         id: 'insight-cold-start',
         type: 'info',
         category: 'info',
-        title: 'Getting Started with Glance',
+        title: 'เริ่มต้นใช้งาน Glance',
         message:
-          'No entries were recorded in the selected period. Start logging your daily metrics to discover trends, patterns, and progress.',
+          'ยังไม่มีข้อมูลที่บันทึกในช่วงเวลาที่เลือก เริ่มบันทึกตัวชี้วัดประจำวันเพื่อค้นหาแนวโน้ม รูปแบบ และความคืบหน้าของคุณ',
         evidence: {
           recordCount: 0,
           periodDays: days,
@@ -147,8 +147,8 @@ export class InsightService {
         id: 'insight-insufficient-data',
         type: 'info',
         category: 'info',
-        title: 'Building Your Data Profile',
-        message: `You have logged ${records.length} entries so far. Continue tracking over the coming days to unlock trends, patterns, and associations.`,
+        title: 'กำลังสร้างโปรไฟล์ข้อมูลของคุณ',
+        message: `คุณบันทึกข้อมูลไปแล้ว ${records.length} รายการ ติดตามอย่างต่อเนื่องในวันถัดไปเพื่อปลดล็อกการวิเคราะห์แนวโน้ม รูปแบบ และความสัมพันธ์`,
         evidence: {
           currentRecords: records.length,
           minimumRecordsRequired: 3,
@@ -236,11 +236,11 @@ export class InsightService {
         id: `goal-progress-${goal.id}`,
         type: 'goal_progress',
         category: achievementRate >= 70 ? 'positive' : 'info',
-        title: `Goal Progress: ${goal.name}`,
+        title: `ความคืบหน้าเป้าหมาย: ${goal.name}`,
         message:
           daysMet === totalRecordedDays
-            ? `You met your ${goal.name} target on all ${daysMet} days logged during this period.`
-            : `You met your ${goal.name} target on ${daysMet} of ${totalRecordedDays} recorded days (${achievementRate}%).`,
+            ? `คุณทำได้ตามเป้าหมาย ${goal.name} ครบทั้ง ${daysMet} วันที่บันทึกในช่วงเวลานี้`
+            : `คุณทำได้ตามเป้าหมาย ${goal.name} จำนวน ${daysMet} จาก ${totalRecordedDays} วันที่บันทึก (${achievementRate}%)`,
         metricId: goal.metric.id,
         metricName: goal.metric.name,
         evidence: {
@@ -259,8 +259,8 @@ export class InsightService {
           id: `goal-suggestion-${goal.id}`,
           type: 'suggestion',
           category: 'info',
-          title: `Goal Focus: ${goal.metric.name}`,
-          message: `Your current average for ${goal.metric.name} is ${currentAvg}${goal.metric.unit ? ' ' + goal.metric.unit : ''} (goal: ${this.formatOperator(goal.operator)} ${targetVal}${goal.metric.unit ? ' ' + goal.metric.unit : ''}). Aiming for consistent daily entries will help reach your target.`,
+          title: `ข้อแนะนำสำหรับเป้าหมาย: ${goal.metric.name}`,
+          message: `ค่าเฉลี่ยปัจจุบันของ ${goal.metric.name} อยู่ที่ ${currentAvg}${goal.metric.unit ? ' ' + goal.metric.unit : ''} (เป้าหมาย: ${this.formatOperator(goal.operator)} ${targetVal}${goal.metric.unit ? ' ' + goal.metric.unit : ''}) การบันทึกอย่างสม่ำเสมอจะช่วยให้คุณบรรลุเป้าหมายได้ดียิ่งขึ้น`,
           metricId: goal.metric.id,
           metricName: goal.metric.name,
           evidence: {
@@ -321,8 +321,8 @@ export class InsightService {
             id: `trend-up-${metric.id}`,
             type: 'trend',
             category: 'info',
-            title: `${metric.name} Upward Trend`,
-            message: `Your ${metric.name} trended upward over this period, shifting from an average of ${roundedFirst}${unitStr} to ${roundedSecond}${unitStr}.`,
+            title: `แนวโน้มขาขึ้น: ${metric.name}`,
+            message: `${metric.name} มีแนวโน้มเพิ่มขึ้นในช่วงเวลานี้ โดยค่าเฉลี่ยเปลี่ยนจาก ${roundedFirst}${unitStr} เป็น ${roundedSecond}${unitStr}`,
             metricId: metric.id,
             metricName: metric.name,
             evidence: {
@@ -337,8 +337,8 @@ export class InsightService {
             id: `trend-down-${metric.id}`,
             type: 'trend',
             category: 'info',
-            title: `${metric.name} Downward Trend`,
-            message: `Your ${metric.name} trended downward over this period, shifting from an average of ${roundedFirst}${unitStr} to ${roundedSecond}${unitStr}.`,
+            title: `แนวโน้มขาลง: ${metric.name}`,
+            message: `${metric.name} มีแนวโน้มลดลงในช่วงเวลานี้ โดยค่าเฉลี่ยเปลี่ยนจาก ${roundedFirst}${unitStr} เป็น ${roundedSecond}${unitStr}`,
             metricId: metric.id,
             metricName: metric.name,
             evidence: {
@@ -354,8 +354,8 @@ export class InsightService {
           id: `trend-stable-${metric.id}`,
           type: 'trend',
           category: 'info',
-          title: `Stable ${metric.name}`,
-          message: `Your recorded ${metric.name} remained relatively steady across ${numValues.length} entries, averaging ${roundedSecond}${unitStr}.`,
+          title: `${metric.name} อยู่ในเกณฑ์คงที่`,
+          message: `ข้อมูล ${metric.name} มีความสม่ำเสมอและค่อนข้างคงที่จากการบันทึก ${numValues.length} ครั้ง โดยมีค่าเฉลี่ยอยู่ที่ ${roundedSecond}${unitStr}`,
           metricId: metric.id,
           metricName: metric.name,
           evidence: {
@@ -403,8 +403,8 @@ export class InsightService {
             id: `pattern-consistency-${metric.id}`,
             type: 'pattern',
             category: 'positive',
-            title: `Consistent ${metric.name}`,
-            message: `"${metric.name}" was recorded as completed on ${completedDays} of ${totalDays} logged days. Consistent tracking supports habit awareness.`,
+            title: `ความต่อเนื่อง: ${metric.name}`,
+            message: `"${metric.name}" ถูกบันทึกว่าทำสำเร็จใน ${completedDays} จาก ${totalDays} วันที่มีการบันทึก การติดตามอย่างสม่ำเสมอช่วยสร้างสุขนิสัยที่ดี`,
             metricId: metric.id,
             metricName: metric.name,
             evidence: {
@@ -442,8 +442,8 @@ export class InsightService {
             id: `pattern-selection-${metric.id}`,
             type: 'pattern',
             category: 'info',
-            title: `Frequent Selection: ${metric.name}`,
-            message: `"${maxLabel}" was the most frequent entry for ${metric.name}, recorded in ${maxCount} of ${metricRecords.length} entries (${pct}%).`,
+            title: `ตัวเลือกที่พบบ่อย: ${metric.name}`,
+            message: `"${maxLabel}" เป็นตัวเลือกที่บันทึกบ่อยที่สุดสำหรับ ${metric.name} โดยบันทึกไป ${maxCount} จากทั้งหมด ${metricRecords.length} ครั้ง (${pct}%)`,
             metricId: metric.id,
             metricName: metric.name,
             evidence: {
@@ -532,14 +532,14 @@ export class InsightService {
 
         const roundedTrue = Math.round(avgTrue * 10) / 10;
         const roundedFalse = Math.round(avgFalse * 10) / 10;
-        const comparisonWord = diff < 0 ? 'lower' : 'higher';
+        const comparisonWord = diff < 0 ? 'มีค่าต่ำกว่า' : 'มีค่าสูงกว่า';
 
         insights.push({
           id: `rel-${boolM.id}-${numM.id}`,
           type: 'relationship',
           category: 'info',
-          title: `Observed Association: ${boolM.name} & ${numM.name}`,
-          message: `On days where ${boolM.name} was recorded as completed, the recorded ${numM.name} tended to be ${comparisonWord} (averaging ${roundedTrue} vs ${roundedFalse} on other recorded days).`,
+          title: `ความสัมพันธ์ที่พบ: ${boolM.name} กับ ${numM.name}`,
+          message: `ในวันที่ "${boolM.name}" บันทึกว่าทำสำเร็จ พบว่า "${numM.name}" มักจะ${comparisonWord} (เฉลี่ย ${roundedTrue} เทียบกับ ${roundedFalse} ในวันที่ไม่ได้ทำ)`,
           metricId: numM.id,
           metricName: numM.name,
           evidence: {

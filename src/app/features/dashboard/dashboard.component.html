@@ -58,9 +58,9 @@
         <p class="empty-description">
           สร้างรายการติดตามแรกของคุณเพื่อเริ่มเก็บข้อมูลสุขภาพและดูสรุปภาพรวมในหน้านี้
         </p>
-        <a routerLink="/metrics/new" class="btn-primary-action btn-empty-action">
+        <button type="button" routerLink="/metrics/new" class="btn-primary-action btn-empty-action">
           + เพิ่มตัวชี้วัดแรก
-        </a>
+        </button>
       </div>
     } @else {
       <!-- 2. Overview Summary Cards -->
@@ -109,7 +109,7 @@
       <section class="insight-preview-section">
         <div class="section-header">
           <div class="section-title-wrap">
-            <h2 class="section-title">AI Insight</h2>
+            <h2 class="section-title">Insight</h2>
             <span class="section-subtitle">สิ่งที่น่าสนใจจากข้อมูลของคุณ</span>
           </div>
           <a routerLink="/insights" class="link-view-all">
@@ -151,7 +151,9 @@
                     <span class="type-badge" [ngClass]="getInsightCategoryBadgeClass(insight.category)">
                       {{ getInsightCategoryLabel(insight.category) }}
                     </span>
-                    <span class="badge-type">{{ getInsightTypeLabel(insight.type) }}</span>
+                    @if (insight.type !== 'info') {
+                      <span class="badge-type">{{ getInsightTypeLabel(insight.type) }}</span>
+                    }
                     @if (insight.metricName) {
                       <span class="metric-tag">{{ insight.metricName }}</span>
                     }
@@ -409,9 +411,9 @@
                 </div>
 
                 <div class="rec-value-col">
-                  <span class="rec-title">{{ formatRecentRecordValue(rec) }}</span>
+                  <span class="rec-val-text">{{ formatRecentRecordValue(rec) }}</span>
                   @if (rec.note) {
-                    <span class="text-meta">{{ rec.note }}</span>
+                    <span class="rec-note-text">{{ rec.note }}</span>
                   }
                 </div>
 

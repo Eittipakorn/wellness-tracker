@@ -47,8 +47,14 @@
 .trend-dots-row { display: flex; gap: .375rem; overflow-x: auto; padding-bottom: .25rem; }
 .trend-day-dot { display: flex; flex-direction: column; align-items: center; gap: .125rem; }
 .breakdown-count { font-weight: 600; }
-.rec-value-col { flex: 1; }
-.rec-time-col { white-space: nowrap; }
+.btn-primary-action { display: inline-flex; align-items: center; justify-content: center; padding: .5rem 1.125rem; font-size: .875rem; font-weight: 600; color: #fff; background: #2563eb; border: none; border-radius: .5rem; text-decoration: none; cursor: pointer; transition: background .15s ease; }
+.btn-primary-action:hover { background: #1d4ed8; }
+.btn-empty-action { margin-top: 1.25rem; }
+.rec-info-col { min-width: 170px; display: flex; align-items: center; gap: .5rem; }
+.rec-value-col { display: flex; flex-direction: column; gap: .25rem; flex: 1; min-width: 140px; }
+.rec-val-text { font-size: .9375rem; font-weight: 600; color: #0f172a; word-break: break-word; }
+.rec-note-text { font-size: .75rem; color: #64748b; line-height: 1.35; }
+.rec-time-col { white-space: nowrap; text-align: right; }
 .insight-state-box { display: flex; align-items: center; justify-content: center; gap: .75rem; padding: 1.25rem; background: #fff; border: 1px dashed #cbd5e1; border-radius: .5rem; text-align: center; }
 .insight-state-error { border-color: #fca5a5; background: #fffafb; }
 .insight-state-empty { flex-direction: column; gap: .25rem; }
@@ -67,6 +73,6 @@
 .cold-start-action { margin-top: .25rem; }
 .insight-preview-footer { display: flex; justify-content: flex-end; padding-top: .25rem; }
 @media (max-width: 768px) {
-  .recent-record-row { flex-direction: column; align-items: flex-start; gap: .25rem; }
-  .rec-time-col { align-self: flex-end; }
+  .recent-record-row { flex-direction: column; align-items: flex-start; gap: .5rem; }
+  .rec-time-col { align-self: flex-start; }
 }

@@ -214,11 +214,11 @@ describe('RecordsComponent', () => {
   });
 
   describe('formatThaiDateTime', () => {
-    it('should format date with Thai month and Buddhist Era year', () => {
-      // 2026-10-03 -> yearBE is 2569, month is ตุลาคม
+    it('should format date with Thai month and C.E. year', () => {
+      // 2026-10-03 -> yearCE is 2026, month is ตุลาคม
       const formatted = component.formatThaiDateTime('2026-10-03T13:30:00.000Z');
       expect(formatted).toContain('ตุลาคม');
-      expect(formatted).toContain('2569');
+      expect(formatted).toContain('2026');
       expect(formatted).toContain('น.');
     });
   });

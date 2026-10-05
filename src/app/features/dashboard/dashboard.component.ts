@@ -1,9 +1,11 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { InsightService } from '../../core/services/insight.service';
+import { MetricService } from '../../core/services/metric.service';
 import {
   DashboardData,
   DashboardDateRange,
@@ -29,11 +31,14 @@ import { MetricType } from '../../core/models/metric.models';
 export class DashboardComponent implements OnInit, OnDestroy {
   private readonly dashboardService = inject(DashboardService);
   private readonly insightService = inject(InsightService);
+  private readonly metricService = inject(MetricService, { optional: true });
 
   private dashboardSub?: Subscription;
   private insightSub?: Subscription;
+  private metricsSub?: Subscription;
 
   readonly selectedDays = signal<number>(7);
+  readonly optionsMap = signal<Map<string, string>>(new Map());
   readonly dashboardData = signal<DashboardData | null>(null);
   readonly isLoading = signal<boolean>(true);
   readonly errorMessage = signal<string | null>(null);
@@ -59,12 +64,37 @@ export class DashboardComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    this.loadMetricsOptions();
     this.loadDashboard(this.selectedDays());
   }
 
   ngOnDestroy(): void {
     this.dashboardSub?.unsubscribe();
     this.insightSub?.unsubscribe();
+    this.metricsSub?.unsubscribe();
+  }
+
+  loadMetricsOptions(): void {
+    if (!this.metricService) return;
+    this.metricsSub?.unsubscribe();
+    this.metricsSub = this.metricService
+      .getMetrics()
+      .pipe(catchError(() => of(null)))
+      .subscribe({
+        next: (res) => {
+          if (res?.data?.metrics) {
+            const map = new Map<string, string>();
+            for (const m of res.data.metrics) {
+              if (m.options) {
+                for (const opt of m.options) {
+                  map.set(opt.id, opt.label);
+                }
+              }
+            }
+            this.optionsMap.set(map);
+          }
+        },
+      });
   }
 
   loadDashboard(days: number): void {
@@ -135,9 +165,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const sMonth = shortMonths[s.getMonth()];
     const eDay = e.getDate();
     const eMonth = shortMonths[e.getMonth()];
-    const eYearBE = e.getFullYear() + 543;
+    const endYear = e.getFullYear();
 
-    return `${sDay} ${sMonth} – ${eDay} ${eMonth} ${eYearBE} (${dateRange.days} วัน)`;
+    return `${sDay} ${sMonth} – ${eDay} ${eMonth} ${endYear} (${dateRange.days} วัน)`;
   }
 
   formatThaiDateTime(isoDate: string | null | undefined): string {
@@ -152,11 +182,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     const day = d.getDate();
     const month = thaiMonths[d.getMonth()];
-    const yearBE = d.getFullYear() + 543;
+    const yearCE = d.getFullYear();
     const hours = d.getHours().toString().padStart(2, '0');
     const minutes = d.getMinutes().toString().padStart(2, '0');
 
-    return `${day} ${month} ${yearBE} · ${hours}:${minutes} น.`;
+    return `${day} ${month} ${yearCE} · ${hours}:${minutes} น.`;
   }
 
   formatDateShort(dateStr: unknown): string {
@@ -248,12 +278,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
       case 'SINGLE_SELECT': {
         const optId = typeof val === 'object' && val !== null && 'optionId' in val ? val.optionId : val;
-        const matchingMetric = this.dashboardData()?.metrics.find((m) => m.id === record.metricId);
-        if (matchingMetric?.summary.optionBreakdown && optId) {
-          // If label matches directly
-          if (matchingMetric.summary.optionBreakdown[optId] !== undefined) return optId;
-        }
-        return String(optId || '-');
+        const directLabel = typeof val === 'object' && val !== null && 'label' in val ? val.label : null;
+        if (directLabel) return String(directLabel);
+        const mappedLabel = optId ? this.optionsMap().get(optId) : null;
+        return mappedLabel || String(optId || '-');
       }
       case 'MULTIPLE_SELECT': {
         const optIds: string[] =
@@ -262,7 +290,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
             : Array.isArray(val)
               ? val
               : [];
-        return optIds.length > 0 ? optIds.join(', ') : '-';
+        const labels = optIds.map((id) => this.optionsMap().get(id) || id);
+        return labels.length > 0 ? labels.join(', ') : '-';
       }
       case 'TEXT': {
         const txt = typeof val === 'object' && val !== null && 'value' in val ? val.value : val;

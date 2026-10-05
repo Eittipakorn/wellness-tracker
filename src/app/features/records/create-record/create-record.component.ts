@@ -224,6 +224,11 @@ export class CreateRecordComponent implements OnInit {
       return;
     }
 
+    if (recordedDate.getFullYear() < 1900) {
+      this.errorMessage.set('ปีที่บันทึกต้องไม่ต่ำกว่า ค.ศ. 1900');
+      return;
+    }
+
     // Prepare and validate value according to MetricType
     let formattedValue: unknown;
 

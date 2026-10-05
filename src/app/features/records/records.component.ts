@@ -179,11 +179,11 @@ export class RecordsComponent implements OnInit {
 
     const day = d.getDate();
     const month = thaiMonths[d.getMonth()];
-    const yearBE = d.getFullYear() + 543;
+    const yearCE = d.getFullYear();
     const hours = d.getHours().toString().padStart(2, '0');
     const minutes = d.getMinutes().toString().padStart(2, '0');
 
-    return `${day} ${month} ${yearBE} · ${hours}:${minutes} น.`;
+    return `${day} ${month} ${yearCE} · ${hours}:${minutes} น.`;
   }
 
   getMetricTypeLabel(type: MetricType): string {
