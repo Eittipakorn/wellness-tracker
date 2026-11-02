@@ -42,6 +42,12 @@ export interface CreateMetricOptionRequest {
   sortOrder?: number;
 }
 
+export interface UpdateMetricOptionRequest {
+  id?: string;
+  label: string;
+  sortOrder?: number;
+}
+
 export interface CreateMetricRequest {
   name: string;
   type: MetricType;
@@ -62,5 +68,5 @@ export interface UpdateMetricRequest {
   ratingMin?: number | null;
   ratingMax?: number | null;
   isActive?: boolean;
-  options?: CreateMetricOptionRequest[];
+  options?: UpdateMetricOptionRequest[];
 }

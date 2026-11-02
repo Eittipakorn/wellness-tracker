@@ -211,23 +211,97 @@ export class MetricService {
       if (uniqueLabels.size !== labels.length) {
         throw new BadRequestError('Metric option labels must be unique');
       }
+
+      const existingOptionIds = new Set(existing.options.map((o) => o.id));
+      const providedIds = dto.options
+        .map((o) => o.id)
+        .filter((id): id is string => Boolean(id));
+
+      if (new Set(providedIds).size !== providedIds.length) {
+        throw new BadRequestError('Duplicate option IDs provided');
+      }
+
+      for (const id of providedIds) {
+        if (!existingOptionIds.has(id)) {
+          throw new BadRequestError(`Option with ID ${id} does not belong to this metric`);
+        }
+      }
     }
 
     // 6. Execute update (in transaction if options need updating)
     return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       if (dto.options !== undefined && isSelectType) {
-        await tx.metricOption.deleteMany({
-          where: { metricId },
-        });
+        const existingOptions = existing.options;
+        const matchedExistingIds = new Set<string>();
 
-        if (dto.options.length > 0) {
-          await tx.metricOption.createMany({
-            data: dto.options.map((opt, idx) => ({
-              metricId,
+        type ResolvedOption = {
+          existingId?: string;
+          label: string;
+          sortOrder: number;
+        };
+
+        const resolvedOptions: ResolvedOption[] = [];
+
+        for (let idx = 0; idx < dto.options.length; idx++) {
+          const opt = dto.options[idx];
+          const sortOrder = opt.sortOrder ?? idx;
+          if (opt.id && existingOptions.some((eo) => eo.id === opt.id)) {
+            matchedExistingIds.add(opt.id);
+            resolvedOptions.push({
+              existingId: opt.id,
               label: opt.label,
-              sortOrder: opt.sortOrder ?? idx,
-            })),
+              sortOrder,
+            });
+          } else {
+            resolvedOptions.push({
+              label: opt.label,
+              sortOrder,
+            });
+          }
+        }
+
+        for (const item of resolvedOptions) {
+          if (!item.existingId) {
+            const matchByLabel = existingOptions.find(
+              (eo) =>
+                !matchedExistingIds.has(eo.id) &&
+                eo.label.trim().toLowerCase() === item.label.trim().toLowerCase()
+            );
+            if (matchByLabel) {
+              item.existingId = matchByLabel.id;
+              matchedExistingIds.add(matchByLabel.id);
+            }
+          }
+        }
+
+        const toDeleteIds = existingOptions
+          .filter((eo) => !matchedExistingIds.has(eo.id))
+          .map((eo) => eo.id);
+
+        if (toDeleteIds.length > 0) {
+          await tx.metricOption.deleteMany({
+            where: { id: { in: toDeleteIds } },
           });
+        }
+
+        for (const item of resolvedOptions) {
+          if (item.existingId) {
+            await tx.metricOption.update({
+              where: { id: item.existingId },
+              data: {
+                label: item.label,
+                sortOrder: item.sortOrder,
+              },
+            });
+          } else {
+            await tx.metricOption.create({
+              data: {
+                metricId,
+                label: item.label,
+                sortOrder: item.sortOrder,
+              },
+            });
+          }
         }
       }
 

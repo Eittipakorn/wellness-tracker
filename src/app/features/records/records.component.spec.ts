@@ -202,6 +202,22 @@ describe('RecordsComponent', () => {
       expect(component.getMultipleSelectLabels(multiRecord)).toEqual(['สดชื่น', 'เหนื่อยล้า']);
     });
 
+    it('Case B: should resolve multiple select option labels from intact option IDs instead of showing raw UUIDs', () => {
+      const optionMap = new Map<string, string>();
+      optionMap.set('5c839803-2cba-44c2-971e-77fd7f2a1148', 'ค่ำ');
+      optionMap.set('1da4d10c-4097-416d-ab44-df72e60401fb', 'เช้า');
+      component.optionsMap.set(optionMap);
+
+      const record: MetricRecord = {
+        ...sampleRecord,
+        value: { optionIds: ['1da4d10c-4097-416d-ab44-df72e60401fb', '5c839803-2cba-44c2-971e-77fd7f2a1148'] },
+        metric: { id: 'm-meditation', name: 'ช่วงเวลาทำสมาธิ', type: 'MULTIPLE_SELECT' },
+      };
+
+      expect(component.formatValue(record)).toBe('เช้า, ค่ำ');
+      expect(component.getMultipleSelectLabels(record)).toEqual(['เช้า', 'ค่ำ']);
+    });
+
     it('should format TEXT value directly', () => {
       const textRecord: MetricRecord = {
         ...sampleRecord,

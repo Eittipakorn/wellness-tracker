@@ -275,6 +275,50 @@ describe('EditRecordComponent', () => {
     expect(component.selectedOptionIds()).toEqual(['opt-fatigue']);
   });
 
+  it('Case C: should restore all previously selected values when editing multiple select record with preserved option IDs', () => {
+    const meditationMetric: Metric = {
+      id: 'm-meditation',
+      accountId: 'u1',
+      name: 'ช่วงเวลาทำสมาธิ',
+      type: 'MULTIPLE_SELECT',
+      isActive: true,
+      createdAt: '',
+      updatedAt: '',
+      options: [
+        { id: '1da4d10c-4097-416d-ab44-df72e60401fb', metricId: 'm-meditation', label: 'เช้า', sortOrder: 0, createdAt: '', updatedAt: '' },
+        { id: '996bd948-8d76-4729-90ab-6c3744d7ed23', metricId: 'm-meditation', label: 'สาย', sortOrder: 1, createdAt: '', updatedAt: '' },
+        { id: '9ab89307-481c-4cbe-8219-090ad5f5bace', metricId: 'm-meditation', label: 'บ่าย', sortOrder: 2, createdAt: '', updatedAt: '' },
+        { id: 'f46796f2-a625-49b1-808a-204b88984b32', metricId: 'm-meditation', label: 'เย็น', sortOrder: 3, createdAt: '', updatedAt: '' },
+        { id: '5c839803-2cba-44c2-971e-77fd7f2a1148', metricId: 'm-meditation', label: 'ค่ำ', sortOrder: 4, createdAt: '', updatedAt: '' },
+      ],
+    };
+
+    const existingRecord: MetricRecord = {
+      ...sampleRecord,
+      metricId: 'm-meditation',
+      value: {
+        optionIds: [
+          '1da4d10c-4097-416d-ab44-df72e60401fb',
+          '5c839803-2cba-44c2-971e-77fd7f2a1148',
+        ],
+      },
+      metric: { id: 'm-meditation', name: 'ช่วงเวลาทำสมาธิ', type: 'MULTIPLE_SELECT' },
+    };
+
+    mockRecordService.getRecord.mockReturnValue(of({ statusCode: 200, data: { record: existingRecord } }));
+    mockMetricService.getMetric.mockReturnValue(of({ statusCode: 200, data: { metric: meditationMetric } }));
+
+    component.ngOnInit();
+
+    expect(component.selectedOptionIds()).toEqual([
+      '1da4d10c-4097-416d-ab44-df72e60401fb',
+      '5c839803-2cba-44c2-971e-77fd7f2a1148',
+    ]);
+    expect(component.isOptionSelected('1da4d10c-4097-416d-ab44-df72e60401fb')).toBe(true);
+    expect(component.isOptionSelected('5c839803-2cba-44c2-971e-77fd7f2a1148')).toBe(true);
+    expect(component.isOptionSelected('996bd948-8d76-4729-90ab-6c3744d7ed23')).toBe(false);
+  });
+
   it('9. should populate TEXT metric values correctly', () => {
     const textRecord: MetricRecord = {
       ...sampleRecord,

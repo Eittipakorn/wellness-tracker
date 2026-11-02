@@ -34,6 +34,7 @@ export class EditMetricComponent implements OnInit {
   readonly isSubmitting = signal<boolean>(false);
   readonly loadError = signal<string | null>(null);
   readonly errorMessage = signal<string | null>(null);
+  private optionIds: (string | null)[] = [];
 
   readonly form = this.fb.group({
     name: ['', [Validators.required]],
@@ -84,11 +85,13 @@ export class EditMetricComponent implements OnInit {
 
         if (m.type === 'SINGLE_SELECT' || m.type === 'MULTIPLE_SELECT') {
           this.optionsArray.clear();
+          this.optionIds = [];
           if (m.options && m.options.length > 0) {
             for (const opt of m.options) {
               this.optionsArray.push(
                 new FormControl(opt.label, { nonNullable: true })
               );
+              this.optionIds.push(opt.id);
             }
           }
           // Ensure at least 2 option fields
@@ -112,11 +115,13 @@ export class EditMetricComponent implements OnInit {
 
   addOption(): void {
     this.optionsArray.push(new FormControl('', { nonNullable: true }));
+    this.optionIds.push(null);
   }
 
   removeOption(index: number): void {
     if (this.optionsArray.length > 2) {
       this.optionsArray.removeAt(index);
+      this.optionIds.splice(index, 1);
     }
   }
 
@@ -219,10 +224,14 @@ export class EditMetricComponent implements OnInit {
     }
 
     if (type === 'SINGLE_SELECT' || type === 'MULTIPLE_SELECT') {
-      payload.options = this.optionsArray.controls.map((ctrl, index) => ({
-        label: ctrl.value.trim(),
-        sortOrder: index,
-      }));
+      payload.options = this.optionsArray.controls.map((ctrl, index) => {
+        const optId = this.optionIds[index];
+        return {
+          ...(optId ? { id: optId } : {}),
+          label: ctrl.value.trim(),
+          sortOrder: index,
+        };
+      });
     }
 
     const id = this.metricId();

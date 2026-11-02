@@ -61,6 +61,7 @@
             class="form-input"
             [class.input-error]="isFieldInvalid('name')"
             autocomplete="off"
+            (keydown.enter)="$event.preventDefault()"
           />
           @if (isFieldInvalid('name')) {
             <span class="field-error">{{ getNameError() }}</span>
@@ -80,6 +81,7 @@
                 formControlName="unit"
                 placeholder="เช่น kg, นาที, แก้ว, กิโลเมตร, ครั้ง"
                 class="form-input"
+                (keydown.enter)="$event.preventDefault()"
               />
               <span class="field-hint">หน่วยจะถูกแสดงคู่กับตัวเลขในหน้าบันทึกและกราฟสรุป</span>
             </div>
@@ -99,6 +101,7 @@
                   type="number"
                   formControlName="ratingMin"
                   class="form-input number-input"
+                  (keydown.enter)="$event.preventDefault()"
                 />
               </div>
               <span class="range-divider">ถึง</span>
@@ -109,6 +112,7 @@
                   type="number"
                   formControlName="ratingMax"
                   class="form-input number-input"
+                  (keydown.enter)="$event.preventDefault()"
                 />
               </div>
             </div>
@@ -143,6 +147,7 @@
                     [formControlName]="$index"
                     placeholder="เช่น ดีมาก, ปานกลาง, หรือชื่ออาการ"
                     class="form-input"
+                    (keydown.enter)="$event.preventDefault()"
                   />
                   @if (optionsArray.length > 2) {
                     <button

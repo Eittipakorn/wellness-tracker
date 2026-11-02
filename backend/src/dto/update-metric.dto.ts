@@ -13,6 +13,10 @@ import {
 import { Transform, Type } from 'class-transformer';
 
 export class UpdateMetricOptionDto {
+  @IsOptional()
+  @IsUUID('4', { message: 'Option ID must be a valid UUID' })
+  id?: string;
+
   @IsString({ message: 'Option label must be a string' })
   @IsNotEmpty({ message: 'Option label is required' })
   @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))

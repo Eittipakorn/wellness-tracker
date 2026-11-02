@@ -201,4 +201,116 @@ describe('EditMetricComponent', () => {
     expect(component.errorMessage()).toContain('มีตัวชี้วัดชื่อ "มีอยู่แล้ว" อยู่แล้ว');
     expect(component.isSubmitting()).toBe(false);
   });
+
+  describe('Regression: Multiple Select Options Preservation & Cancel', () => {
+    const sampleMultiSelectMetric: Metric = {
+      id: 'm-multi-test',
+      accountId: 'u1',
+      name: 'ช่วงเวลาทำสมาธิ',
+      type: 'MULTIPLE_SELECT',
+      description: 'ช่วงเวลาที่ทำสมาธิในแต่ละวัน',
+      isActive: true,
+      createdAt: '2026-10-04T00:00:00Z',
+      updatedAt: '2026-10-04T00:00:00Z',
+      options: [
+        { id: 'opt-morning', metricId: 'm-multi-test', label: 'เช้า', sortOrder: 0, createdAt: '', updatedAt: '' },
+        { id: 'opt-evening', metricId: 'm-multi-test', label: 'เย็น', sortOrder: 1, createdAt: '', updatedAt: '' },
+      ],
+    };
+
+    it('Case A & E: should not call updateMetric when editing options but user cancels or navigates away', () => {
+      mockActivatedRoute.snapshot.paramMap = convertToParamMap({ id: 'm-multi-test' });
+      mockMetricService.getMetric.mockReturnValue(
+        of({ statusCode: 200, data: { metric: sampleMultiSelectMetric } })
+      );
+      component.ngOnInit();
+
+      // User modifies option label and adds a new option in the form
+      component.optionsArray.at(0).setValue('เช้าตรู่');
+      component.addOption();
+      component.optionsArray.at(2).setValue('ค่ำ');
+
+      // User does NOT submit form (e.g. clicks Cancel / navigates away)
+      // Form state is dirty/changed in memory only
+      expect(component.optionsArray.length).toBe(3);
+      expect(mockMetricService.updateMetric).not.toHaveBeenCalled();
+    });
+
+    it('Case D: should preserve existing option IDs in payload when saving edited select metric', () => {
+      mockActivatedRoute.snapshot.paramMap = convertToParamMap({ id: 'm-multi-test' });
+      mockMetricService.getMetric.mockReturnValue(
+        of({ statusCode: 200, data: { metric: sampleMultiSelectMetric } })
+      );
+      component.ngOnInit();
+
+      // Rename first option from 'เช้า' to 'เช้าตรู่', leave 2nd as 'เย็น', add 3rd 'ค่ำ'
+      component.optionsArray.at(0).setValue('เช้าตรู่');
+      component.addOption();
+      component.optionsArray.at(2).setValue('ค่ำ');
+
+      mockMetricService.updateMetric.mockReturnValue(
+        of({
+          statusCode: 200,
+          message: 'Updated',
+          data: { metric: sampleMultiSelectMetric },
+        })
+      );
+
+      component.onSubmit();
+
+      expect(mockMetricService.updateMetric).toHaveBeenCalledWith('m-multi-test', {
+        name: 'ช่วงเวลาทำสมาธิ',
+        description: 'ช่วงเวลาที่ทำสมาธิในแต่ละวัน',
+        isActive: true,
+        options: [
+          { id: 'opt-morning', label: 'เช้าตรู่', sortOrder: 0 },
+          { id: 'opt-evening', label: 'เย็น', sortOrder: 1 },
+          { label: 'ค่ำ', sortOrder: 2 },
+        ],
+      });
+    });
+
+    it('Case D (Remove): should correctly remove option and maintain remaining option IDs', () => {
+      mockActivatedRoute.snapshot.paramMap = convertToParamMap({ id: 'm-multi-test' });
+      mockMetricService.getMetric.mockReturnValue(
+        of({
+          statusCode: 200,
+          data: {
+            metric: {
+              ...sampleMultiSelectMetric,
+              options: [
+                { id: 'opt-1', metricId: 'm-multi-test', label: 'เช้า', sortOrder: 0, createdAt: '', updatedAt: '' },
+                { id: 'opt-2', metricId: 'm-multi-test', label: 'สาย', sortOrder: 1, createdAt: '', updatedAt: '' },
+                { id: 'opt-3', metricId: 'm-multi-test', label: 'เย็น', sortOrder: 2, createdAt: '', updatedAt: '' },
+              ],
+            },
+          },
+        })
+      );
+      component.ngOnInit();
+
+      expect(component.optionsArray.length).toBe(3);
+
+      // Remove middle option (opt-2: 'สาย')
+      component.removeOption(1);
+
+      expect(component.optionsArray.length).toBe(2);
+
+      mockMetricService.updateMetric.mockReturnValue(
+        of({ statusCode: 200, data: { metric: sampleMultiSelectMetric } })
+      );
+
+      component.onSubmit();
+
+      expect(mockMetricService.updateMetric).toHaveBeenCalledWith('m-multi-test', {
+        name: 'ช่วงเวลาทำสมาธิ',
+        description: 'ช่วงเวลาที่ทำสมาธิในแต่ละวัน',
+        isActive: true,
+        options: [
+          { id: 'opt-1', label: 'เช้า', sortOrder: 0 },
+          { id: 'opt-3', label: 'เย็น', sortOrder: 1 },
+        ],
+      });
+    });
+  });
 });
